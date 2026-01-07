@@ -1,0 +1,164 @@
+- name: Home
+  columns:
+    # Left Column - System Stats & Clock
+    - size: small
+      widgets:
+        - type: search
+          search-engine: google
+          new-tab: true
+          bangs:
+          - title: YouTube
+            shortcut: "!yt"
+            url: https://www.youtube.com/results?search_query={QUERY}
+          - title: Chat GPT
+            shortcut: "!c"
+            url: https://chat.openai.com/?q={QUERY}
+        - type: clock
+          hour-format: 12h
+        - type: calendar
+          first-day-of-week: monday
+    # Middle Column - Main Content
+    - size: full
+      widgets:
+      - type: docker-containers
+        title: Docker Services
+        cache: 5s
+        hide-by-default: false
+        # show-all-containers: false
+        containers:
+          jellyfin:
+            name: Jellyfin
+            icon: si:jellyfin
+            url: http://192.168.1.2:8097
+          big-bear-open-webui:
+            name: Open-WebUI
+            icon: mdi:robot
+            url: http://192.168.1.2:8080
+          convertx:
+            name: ConvertX
+            icon: mdi:file-replace-outline
+            url: http://192.168.1.2:3333
+          portainer:
+            name: Portainer
+            icon: si:portainer
+            url: http://192.168.1.2:9000
+          qbittorrent:
+            name: qBittorrent
+            icon: si:qbittorrent
+            url: http://192.168.1.2:8181
+          steam-headless:
+            name: Steam-Headless
+            icon: si:steam
+            url: http://192.168.1.2:8083
+          glance:
+            name: Glance
+            icon: si:glance
+            url: http://192.168.1.2:8002
+            id: glance
+          netstat:
+            name: NetStat
+            parent: glance
+          vidown-frontend:
+            name: Vi[D]own
+            icon: mdi:download
+            url: http://192.168.1.2:3050
+            id: vidown
+          vidown-backend:
+            name: Backend
+            parent: vidown
+          anyconv:
+            name: AnyConv
+            icon: mdi:swap-horizontal
+            url: http://192.168.1.2:3000
+          filemanager-backend:
+            name: Backend
+            icon: mdi:folder
+            url: http://192.168.1.2:8067
+            parent: filemanager
+          filemanager-frontend:
+            name: FileManager
+            icon: mdi:folder-open
+            url: http://192.168.1.2:3067
+            id: filemanager
+          filemanager-nginx:
+            name: Nginx
+            icon: mdi:server
+            url: http://192.168.1.2:3000
+            parent: filemanager
+          cloudflared:
+            name: Cloudflare Tunnel
+            icon: mdi:cloud
+          swingmusic:
+            name: Swing Music
+            icon: mdi:music-note
+            url: http://192.168.1.2:1970
+
+      - type: split-column
+        widgets:
+          - type: server-stats
+            cache: 1m
+            servers:
+            - type: local
+              name: Pico Server
+          - type: extension
+            title: Network Usage
+            url: http://pico:8085/widget
+            cache: 2s
+            allow-potentially-dangerous-html: true
+      - type: bookmarks
+        title: Favorite Links
+        groups:
+          - title: General
+            links:
+              - title: Gmail
+                url: https://mail.google.com/mail/u/0/?ogbl#inbox
+                icon: si:gmail
+              - title: YouTube
+                url: https://youtube.com
+                icon: si:youtube
+              - title: LinkedIn
+                url: https://www.linkedin.com/feed/
+                icon: si:linkedin
+          - title: Development
+            links:
+              - title: GitHub
+                url: https://github.com/
+                icon: si:github
+              - title: Vercel
+                url: https://vercel.com/
+                icon: si:vercel
+              - title: Convex
+                url: https://dashboard.convex.dev/
+                icon: mdi:database
+          - title: AI
+            links:
+              - title: Gemini
+                url: https://gemini.google.com/app
+                icon: si:googlegemini
+              - title: ChatGPT
+                url: https://chat.openai.com/
+                icon: si:openai
+              - title: Hugging Face
+                url: https://huggingface.co/models
+                icon: si:huggingface
+    # Right Column - Server Stats & Weather
+    - size: small
+      widgets:
+        - type: weather
+          location: Jammu, Jammu and Kashmir, India
+          units: metric # alternatively "imperial"
+          hour-format: 12h # alternatively "24h"
+          # Optionally hide the location from being displayed in the widget
+          # hide-location: true
+        - type: html
+          source: |
+            <pre style="font-family: monospace; line-height: 1.2; text-align: center; font-weight: bold; white-space: pre;">
+
+
+            <span style="color: var(--ascii-red)">██████╗</span> <span style="color: var(--ascii-yellow)">██╗</span> <span style="color: var(--ascii-green)">██████╗</span> <span style="color: var(--ascii-cyan)">██████╗</span> 
+            <span style="color: var(--ascii-red)">██╔══██╗</span><span style="color: var(--ascii-yellow)">██║</span><span style="color: var(--ascii-green)">██╔════╝</span><span style="color: var(--ascii-cyan)">██╔═══██╗</span>
+            <span style="color: var(--ascii-red)">  ██████╔╝</span><span style="color: var(--ascii-yellow)">██║</span><span style="color: var(--ascii-green)">██║     </span><span style="color: var(--ascii-cyan)">██║   ██║</span>  
+            <span style="color: var(--ascii-red)">  ██╔═══╝ </span><span style="color: var(--ascii-yellow)">██║</span><span style="color: var(--ascii-green)">██║     </span><span style="color: var(--ascii-cyan)">██║   ██║</span>  
+            <span style="color: var(--ascii-red)">  ██║     </span><span style="color: var(--ascii-yellow)">██║</span><span style="color: var(--ascii-green)">╚██████╗</span><span style="color: var(--ascii-cyan)">╚██████╔╝</span>  
+            <span style="color: var(--ascii-red)">╚═╝     </span><span style="color: var(--ascii-yellow)">╚═╝</span> <span style="color: var(--ascii-green)">╚═════╝</span> <span style="color: var(--ascii-cyan)">╚═════╝</span> 
+            </pre>

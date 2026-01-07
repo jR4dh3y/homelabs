@@ -1,0 +1,186 @@
+- name: Media
+  width: wide
+  # Optionally, if you only have a single page you can hide the desktop navigation for a cleaner look
+  # hide-desktop-navigation: true
+  columns:
+    - size: small
+      widgets:
+        - type: twitch-channels
+          channels:
+            - kraandop
+            - Zerggyyyy
+            - s1mple
+            - ImperialHal__
+            - ohnePixel
+            - ThePrimeagen
+            - teej_dv
+            - Tsoding
+            - dmmulroy
+            - MaxVerstappen
+            - MikaelS1
+          collapse-after: 15
+    - size: full
+      widgets:
+        - type: group
+          widgets:
+            - type: custom-api
+              title: Epic Games Free
+              cache: 1h
+              url: https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions
+              template: | # html
+                <div class="epic-free-games">
+                {{ range .JSON.Array "data.Catalog.searchStore.elements" }}
+                  {{ if .Exists "promotions.promotionalOffers.0.promotionalOffers.0" }}
+                    {{ $promo := index (.Array "promotions.promotionalOffers.0.promotionalOffers") 0 }}
+                    {{ if eq ($promo.Int "discountSetting.discountPercentage") 0 }}
+                      <div class="epic-free-item" style="display: flex; gap: 12px; align-items: center; padding: 8px 0;">
+                        {{ $img := index (.Array "keyImages") 0 }}
+                        <img src="{{ $img.String "url" }}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;" />
+                        <div style="flex: 1;">
+                          <div style="font-weight: bold; color: var(--color-primary);">{{ .String "title" }}</div>
+                          <div style="font-size: 0.85em; color: var(--color-text-subdue);">FREE until {{ $promo.String "endDate" | parseTime "rfc3339" | formatTime "Jan 2" }}</div>
+                        </div>
+                        <span style="background-color: var(--badge-success); color: var(--badge-success-text); padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold;">FREE</span>
+                      </div>
+                    {{ end }}
+                  {{ end }}
+                {{ end }}
+                </div>
+            - type: custom-api
+              title: Steam Deals
+              cache: 1h
+              url: https://api.isthereanydeal.com/deals/v2?key=${ITAD_API_KEY}&country=IN&shops=61&limit=20&sort=-trending
+              template: | # html
+                <div class="steam-deals">
+                {{ range .JSON.Array "list" }}
+                  {{ $flag := .String "deal.flag" }}
+                  <div class="steam-deal-item">
+                    <img src="{{ .String "assets.banner600" }}" />
+                    <span class="steam-deal-badge" style="background-color: var(--badge-error); color: var(--badge-error-text); padding: 3px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">-{{ .Int "deal.cut" }}%</span>
+                    
+                    <div class="steam-deal-content">
+                      <a href="{{ .String "deal.url" }}" target="_blank" rel="noreferrer" style="font-weight: bold; font-size: 0.9em; color: var(--color-primary); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .String "title" }}</a>
+                      
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.8em; color: var(--color-text-subdue);">
+                          <span style="text-decoration: line-through; opacity: 0.7;">₹{{ .Float "deal.regular.amount" | printf "%.0f" }}</span>
+                          <span style="color: var(--badge-success); font-weight: bold; margin-left: 4px;">₹{{ .Float "deal.price.amount" | printf "%.0f" }}</span>
+                        </div>
+                        
+                        {{ if eq $flag "H" }}
+                          <span style="background-color: var(--badge-success); color: var(--badge-success-text); padding: 2px 5px; border-radius: 4px; font-size: 0.65em; font-weight: bold;">LOWEST</span>
+                        {{ else }}
+                          {{ $price := .Float "deal.price.amount" }}
+                          {{ $low1y := .Float "deal.historyLow_1y.amount" }}
+                          {{ if and (gt $low1y 0.0) (le $price $low1y) }}
+                            <span style="background-color: var(--badge-success); opacity: 0.8; color: var(--badge-success-text); padding: 2px 5px; border-radius: 4px; font-size: 0.65em; font-weight: bold;">1Y LOW</span>
+                          {{ end }}
+                        {{ end }}
+                      </div>
+                    </div>
+                  </div>
+                {{ end }}
+                </div>
+        - type: split-column
+          widgets:
+            - type: group
+              widgets:
+                - type: videos
+                  style: vertical-list
+                  collapse-after: 10
+                  channels:
+                    - UCeeFfhMcJa1kjtfZAGskOCA # techlinked
+                    - UC2ksme4hP4Nx97ilFTQ0K0Q # thereat intractive
+                    - UCUyeluBRhGPCW4rPe_UvBZQ # The prime time
+                    - UC8ENHE5xdFSwx71u3fDH5Xw # the primagen
+                    - UCbRP3c757lWg9M-U7TyEkXA # theo
+                    - UCld68syR8Wi-GY_n4CaoJGA # brodie robertson
+                    - UC6biysICWOJ-C3P4Tyeggzg # low level
+                    - UCsBjURrPoezykLs9EqgamOA # Fireship
+                    - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+                    - UC65_CVnMw6hvPET_DRDg3GA # tony
+                    - UC0m81bQuthaQZmFbXEY9QSw # ai code king
+                    - UCIgnGlGkVRhd4qNFcEwLL4A # ai search
+                    - UCVls1GmFKf6WlTraIb_IaJg # distrotube
+                    - UCZXW8E1__d5tZb-wLFOt8TQ # bog
+                    - UCEbYhDd6c6vngsF5PQpFVWg # tsoding
+                    - UCrqM0Ym_NbK1fqeQG2VIohg # tsoding daily
+                    - UCWFNUk2LHUQdRzQcJLYZmcg # bringus studio
+    - size: small
+      widgets:
+  
+        - type: custom-api
+          title: Now Playing
+          cache: 10s
+          template: | # html
+            {{ $url := "http://${CIDER_HOST}/api/v1/playback/now-playing" }}
+            {{ $token := "${CIDER_API_TOKEN}" }}
+            {{ $resp := newRequest $url | withHeader "apitoken" $token | getResponse }}
+
+            {{ if or (not $resp) (not $resp.Response) }}
+              <div style="text-align: center; padding: 24px; color: var(--color-text-subdue);">
+                <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 4px;">App Offline</div>
+                <div style="font-size: 0.85em;">Is Cider running?</div>
+              </div>
+            {{ else if ne $resp.Response.StatusCode 200 }}
+              <div style="text-align: center; padding: 24px; color: var(--color-text-subdue);">
+                 <div>App Offline</div>
+                 <div style="font-size: 0.8em;">{{ $resp.Response.Status }}</div>
+              </div>
+            {{ else }}
+              {{ $info := $resp.JSON }}
+              {{ $name := $info.String "info.name" }}
+              {{ if and (eq ($info.String "status") "error") (ne $name "") }}
+                <div style="text-align: center; padding: 8px 0;">
+                  <span style="color: var(--color-text-subdue); font-size: 0.8em;">No data available</span>
+                </div>
+              {{ else if and (eq ($info.String "status") "ok") (ne $name "") }}
+                {{ $artwork := $info.String "info.artwork.url" | replaceAll "{w}" "600" | replaceAll "{h}" "600" | replaceMatches "^/" "http://${CIDER_HOST}/" }}
+                {{ $artist := $info.String "info.artistName" }}
+                {{ $album := $info.String "info.albumName" }}
+                {{ $url := $info.String "info.url" }}
+                <div style="display: flex; flex-direction: column; gap: 12px; padding: 8px 0;">
+                  <!-- Album Art -->
+                  <div style="position: relative; width: 100%; aspect-ratio: 1; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px var(--overlay-shadow);">
+                    <img src="{{ $artwork }}" style="width: 100%; height: 100%; object-fit: cover;" />
+                    <!-- Gradient overlay -->
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: linear-gradient(transparent, var(--overlay-gradient));"></div>
+                  </div>
+                  
+                  <!-- Song Info -->
+                  <div style="text-align: center;">
+                    <a href="{{ $url }}" target="_blank" rel="noreferrer" style="font-size: 1.1em; font-weight: 700; color: var(--color-primary); text-decoration: none; display: block; margin-bottom: 4px;">
+                      {{ $name }}
+                    </a>
+                    <div style="font-size: 0.95em; color: var(--color-text-highlight); margin-bottom: 2px;">{{ $artist }}</div>
+                    <div style="font-size: 0.85em; color: var(--color-text-subdue);">{{ $album }}</div>
+                  </div>
+                  <!-- Audio Quality Badges -->
+                  {{ $traits := $info.Array "info.audioTraits" }}
+                  {{ if $traits }}
+                  <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                    {{ range $traits }}
+                      {{ $trait := .String "" }}
+                      {{ if eq $trait "lossless" }}
+                        <span style="background-color: var(--badge-lossless); color: var(--badge-lossless-text); padding: 3px 8px; border-radius: 4px; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">Lossless</span>
+                      {{ else if eq $trait "atmos" }}
+                        <span style="background-color: var(--badge-atmos); color: var(--badge-atmos-text); padding: 3px 8px; border-radius: 4px; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">Dolby Atmos</span>
+                      {{ else if eq $trait "spatial" }}
+                        <span style="background-color: var(--badge-spatial); color: var(--badge-spatial-text); padding: 3px 8px; border-radius: 4px; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">Spatial</span>
+                      {{ end }}
+                    {{ end }}
+                  </div>
+                  {{ end }}
+                  <!-- Apple Music branding (its cider but i am using user apple music) -->
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 6px; opacity: 0.6;">
+                    <span style="font-size: 0.75em;">Playing on Apple Music</span>
+                  </div>
+                </div>
+              {{ else }}
+                <div style="text-align: center; padding: 24px; color: var(--color-text-subdue);">
+                  <div style="font-size: 2em; margin-bottom: 8px;">🎵</div>
+                  <div style="font-weight: bold;">Not playing anything</div>
+                  <div style="font-size: 0.85em; margin-top: 4px;">Open Apple Music to start listening</div>
+                </div>
+              {{ end }}
+            {{ end }}

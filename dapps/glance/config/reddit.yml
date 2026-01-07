@@ -1,0 +1,46 @@
+- name: Reddit
+  width: wide
+  columns:
+    - size: full
+      widgets:
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: programminghorror
+              show-thumbnails: true
+              limit : 4
+
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: hacking
+              show-thumbnails: false
+            - type: reddit
+              subreddit: MachineLearning
+              limit: 10
+              collapse-after: 5
+              show-thumbnails: false
+            - type: reddit
+              subreddit: programming
+              limit: 10
+              collapse-after: 5
+              show-thumbnails: false
+
+    - size: full
+      widgets:
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: selfhosted
+              show-thumbnails: true
+            - type: reddit
+              subreddit: unixporn
+              show-thumbnails: true
+
+    - size: small
+      widgets:
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: Animewallpaper
+              show-thumbnails: true

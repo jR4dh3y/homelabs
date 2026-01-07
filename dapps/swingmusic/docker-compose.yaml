@@ -1,0 +1,12 @@
+services:
+  swingmusic:
+    image: ghcr.io/swingmx/swingmusic:latest
+    container_name: swingmusic
+    environment:
+      - TZ=Asia/Kolkata
+    volumes:
+      - /media/devmon/sdc1-usb-Generic_Mass-Sto/Music:/music:ro
+      - /home/pico/swingmusic/config:/config
+    ports:
+      - "1970:1970"
+    restart: unless-stopped

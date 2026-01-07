@@ -1,0 +1,292 @@
+- name: Dev
+  width: wide
+  columns:
+    - size: full
+      widgets:
+        - type: split-column
+          widgets:
+            - type: group
+              widgets:
+                - type: rss
+                  title: AI
+                  limit: 10
+                  collapse-after: 5
+                  cache: 3h
+                  feeds:
+                    - url: https://deepmind.com/blog/feed/basic
+                      title: DeepMind
+                    - url: https://blogs.nvidia.com/feed/
+                      title: NVIDIA
+                - type: rss
+                  title: Research
+                  limit: 10
+                  collapse-after: 5
+                  cache: 3h
+                  feeds:
+                    - url: https://lwn.net/headlines/rss
+                      title: LWN
+                    - url: https://www.phoronix.com/rss.php
+                      title: Phoronix
+                    - url: https://planet.postgresql.org/rss20.xml
+                      title: PostgreSQL
+                - type: rss
+                  title: Tech
+                  limit: 15
+                  collapse-after: 5
+                  cache: 3h
+                  feeds:
+                    - url: https://news.ycombinator.com/rss
+                      title: HN
+                    - url: https://hnrss.org/newest
+                      title: HN Newest
+                    - url: https://hnrss.org/frontpage
+                      title: HN Frontpage
+                    - url: https://github.blog/feed/
+                      title: GitHub Blog
+                    - url: https://feeds.arstechnica.com/arstechnica/index
+                      title: Ars Technica
+                    - url: https://techcrunch.com/feed/
+                      title: TechCrunch
+                    - url: https://www.theverge.com/rss/index.xml
+                      title: The Verge
+                    - url: https://www.engadget.com/rss.xml
+                      title: Engadget
+                    - url: https://blog.cloudflare.com/rss/
+                      title: Cloudflare
+                    - url: https://engineering.fb.com/feed/
+                      title: Meta Engineering
+                - type: rss
+                  title: Security
+                  limit: 10
+                  collapse-after: 5
+                  cache: 3h
+                  feeds:
+                    - url: https://www.schneier.com/feed/atom/
+                      title: Schneier on Security
+                    - url: https://krebsonsecurity.com/feed/
+                      title: Krebs on Security
+                    - url: https://www.darkreading.com/rss.xml
+                      title: Dark Reading
+            - type: group
+              widgets:
+                - type: hacker-news
+                  limit: 10
+                  collapse-after: 6
+                - type: lobsters
+                  collapse-after: 6
+                  limit: 10
+        - type: split-column
+          widgets:
+            - type: group
+              widgets:
+                - type: custom-api
+                  title: Recent Commits
+                  url: https://api.github.com/users/jr4dh3y/events?per_page=20
+                  cache: 15m
+                  template: |
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                      {{ $count := 0.0 }}
+                      {{ range .JSON.Array "" }}
+                        {{ if and (eq (.String "type") "PushEvent") (lt $count 4.0) }}
+                          {{ $count = add $count 1.0 }}
+                          {{ $repo := .String "repo.name" }}
+                          {{ $sha := .String "payload.head" }}
+                          {{ $commitUrl := concat "https://api.github.com/repos/" $repo "/commits/" $sha }}
+                          {{ $commitData := newRequest $commitUrl | getResponse }}
+                          <li style="padding: 8px 0; border-bottom: 1px solid var(--color-widget-background-highlight);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                              <span style="font-size: 0.85em; font-weight: bold; color: var(--color-primary);">{{ $repo }}</span>
+                              <span style="font-size: 0.75em; color: var(--color-text-subdue);">{{ .String "created_at" | parseTime "RFC3339" | formatTime "Jan 02 15:04" }}</span>
+                            </div>
+                            <div style="font-size: 0.9em; color: var(--color-text-main); margin-top: 4px;">
+                              {{ if eq $commitData.Response.StatusCode 200 }}
+                                {{ $commitData.JSON.String "commit.message" }}
+                              {{ else }}
+                                Unable to fetch commit message
+                              {{ end }}
+                            </div>
+                          </li>
+                        {{ end }}
+                      {{ end }}
+                    </ul>
+
+                - type: custom-api
+                  title: Vercel Projects
+                  url: https://api.vercel.com/v9/projects?limit=6
+                  headers:
+                    Authorization: Bearer U3N6VjK3WHiu15xrDhWbJ6hf
+                  cache: 5m
+                  template: |
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                      {{ range .JSON.Array "projects" }}
+                        {{ if .Exists "latestDeployments.0" }}
+                          {{ $deployment := index (.Array "latestDeployments") 0 }}
+                          <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-widget-background-highlight);">
+                            <span style="font-weight: bold; font-size: 0.95em;">{{ .String "name" }}</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                              {{ $state := $deployment.String "readyState" }}
+                              {{ if eq $state "READY" }}
+                                <a href="https://{{ $deployment.String "url" }}" target="_blank" style="text-decoration: none; font-size: 0.75em; color: var(--color-primary); border: 1px solid var(--color-primary); padding: 2px 6px; border-radius: 4px;">Visit</a>
+                              {{ end }}
+                              <div style="font-size: 0.75em; display: flex; align-items: center; gap: 4px; background: var(--color-widget-background-highlight); padding: 2px 6px; border-radius: 10px;">
+                                {{ if eq $state "READY" }}
+                                  <span style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--badge-success);"></span>
+                                {{ else if eq $state "ERROR" }}
+                                  <span style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--badge-error);"></span>
+                                {{ else if eq $state "BUILDING" }}
+                                  <span style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--badge-warning);"></span>
+                                {{ else }}
+                                  <span style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--badge-default);"></span>
+                                {{ end }}
+                                <span style="color: var(--color-text-subdue);">{{ $state }}</span>
+                              </div>
+                            </div>
+                          </li>
+                        {{ end }}
+                      {{ end }}
+                    </ul>
+
+                - type: custom-api
+                  title: Dependency Health
+                  url: https://api.github.com/search/issues?q=user:jr4dh3y+author:app/dependabot+is:pr+is:open&sort=created&order=desc&per_page=5
+                  cache: 1h
+                  template: |
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                      {{ if eq (.JSON.Int "total_count") 0 }}
+                        <li style="padding: 8px 0; color: var(--badge-success-text); text-align: center;">
+                          <span style="background: var(--badge-success); padding: 4px 8px; border-radius: 4px;">All dependencies up to date</span>
+                        </li>
+                      {{ else }}
+                        {{ range .JSON.Array "items" }}
+                          <li style="padding: 8px 0; border-bottom: 1px solid var(--color-widget-background-highlight);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                              <span style="font-size: 0.85em; font-weight: bold; color: var(--color-primary);">
+                                {{ trimPrefix "https://api.github.com/repos/" (.String "repository_url") }}
+                              </span>
+                              <span style="font-size: 0.75em; color: var(--color-text-subdue);">{{ .String "created_at" | parseTime "RFC3339" | toRelativeTime }}</span>
+                            </div>
+                            <div style="font-size: 0.9em; color: var(--color-text-main); margin-top: 4px;">
+                              <a href="{{ .String "html_url" }}" target="_blank" style="text-decoration: none; color: inherit;">
+                                {{ .String "title" }}
+                              </a>
+                            </div>
+                          </li>
+                        {{ end }}
+                      {{ end }}
+                    </ul>
+
+            - type: group
+              widgets:
+                - type: custom-api
+                  title: Syntax & Snippet
+                  url: https://api.github.com/repos/Chalarangelo/30-seconds-of-code/contents/content/snippets/js/s
+                  cache: 24h
+                  template: |
+                    {{ $files := .JSON.Array "" }}
+                    {{ $count := len $files }}
+                    {{ if gt $count 0 }}
+                      {{ $idx := mod (now.Nanosecond) $count }}
+                      {{ $file := index $files $idx }}
+                      <div style="padding: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 8px; color: var(--color-primary); text-transform: capitalize;">
+                          {{ $file.String "name" | replaceAll ".md" "" | replaceAll "-" " " }}
+                        </div>
+                        <div style="font-size: 0.9em; margin-bottom: 8px;">
+                          <a href="{{ $file.String "html_url" }}" target="_blank" style="color: var(--color-text-main);">View on GitHub</a>
+                        </div>
+                        <div style="font-size: 0.8em; color: var(--color-text-subdue);">
+                          (Content fetching unavailable via API)
+                        </div>
+                      </div>
+                    {{ end }}
+
+                - type: custom-api
+                  title: Tech Concepts Flashcard
+                  url: https://api.github.com/users/defunkt
+                  cache: 24h
+                  template: |
+                    {{ $day := mod (now.YearDay) 7 }}
+                    <div style="padding: 8px;">
+                      <div style="font-weight: bold; margin-bottom: 8px; color: var(--color-primary);">
+                        {{ if eq $day 0 }}
+                          What is the CAP Theorem?
+                        {{ else if eq $day 1 }}
+                          What does ACID stand for in databases?
+                        {{ else if eq $day 2 }}
+                          Horizontal vs Vertical Scaling?
+                        {{ else if eq $day 3 }}
+                          Difference between TCP and UDP?
+                        {{ else if eq $day 4 }}
+                          What are the SOLID principles?
+                        {{ else if eq $day 5 }}
+                          REST vs GraphQL?
+                        {{ else }}
+                          What is a Reverse Proxy?
+                        {{ end }}
+                      </div>
+                      <details>
+                        <summary style="cursor: pointer; color: var(--color-text-subdue); font-size: 0.9em;">Reveal Answer</summary>
+                        <div style="margin-top: 8px; color: var(--color-text-main); font-size: 0.9em; line-height: 1.4;">
+                          {{ if eq $day 0 }}
+                            <strong>Consistency, Availability, Partition Tolerance.</strong><br>In a distributed system, you can only pick two.
+                          {{ else if eq $day 1 }}
+                            <strong>Atomicity, Consistency, Isolation, Durability.</strong><br>Properties that guarantee database transactions are processed reliably.
+                          {{ else if eq $day 2 }}
+                            <strong>Horizontal:</strong> Adding more machines (scaling out).<br><strong>Vertical:</strong> Adding more power (CPU/RAM) to an existing machine (scaling up).
+                          {{ else if eq $day 3 }}
+                            <strong>TCP:</strong> Reliable, connection-oriented, ordered (Web, Email).<br><strong>UDP:</strong> Unreliable, connectionless, fast (Streaming, Gaming).
+                          {{ else if eq $day 4 }}
+                            Single responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion.
+                          {{ else if eq $day 5 }}
+                            <strong>REST:</strong> Resource-based, multiple endpoints, over-fetching common.<br><strong>GraphQL:</strong> Query-based, single endpoint, client requests exactly what it needs.
+                          {{ else }}
+                            A server that sits in front of web servers and forwards client requests to those web servers. Used for security, load balancing, and caching.
+                          {{ end }}
+                        </div>
+                      </details>
+                    </div>
+    - size: small
+      widgets:
+        - type: custom-api
+          title: GitHub Stats
+          url: https://api.github.com/users/jr4dh3y
+          cache: 1h
+          template: |
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <img src="{{ .JSON.String "avatar_url" }}" style="width: 60px; height: 60px; border-radius: 50%;" />
+              <div>
+                <div style="font-weight: bold; font-size: 1.2em;">{{ .JSON.String "login" }}</div>
+                <div style="color: var(--color-text-subdue); font-size: 0.9em;">
+                  <span>Repositories: {{ .JSON.Int "public_repos" }}</span> <br>
+                  <span>Followers: {{ .JSON.Int "followers" }}</span>
+                </div>
+              </div>
+            </div>
+
+        - type: custom-api
+          title: LeetCode Daily
+          cache: 4h
+          url: https://alfa-leetcode-api.onrender.com/daily
+          template: |
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <a href="{{ .JSON.String "questionLink" }}" target="_blank" rel="noreferrer" style="font-size: 1.1em; font-weight: bold; color: var(--color-primary);">
+                {{ .JSON.String "questionFrontendId" }}. {{ .JSON.String "questionTitle" }}
+              </a>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                {{ $difficulty := .JSON.String "difficulty" }}
+                {{ if eq $difficulty "Easy" }}
+                  <span style="background-color: var(--badge-success); color: var(--badge-success-text); padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Easy</span>
+                {{ else if eq $difficulty "Medium" }}
+                  <span style="background-color: var(--badge-warning); color: var(--badge-warning-text); padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Medium</span>
+                {{ else }}
+                  <span style="background-color: var(--badge-error); color: var(--badge-error-text); padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">Hard</span>
+                {{ end }}
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px;">
+                {{ range .JSON.Array "topicTags" }}
+                  <span style="background-color: var(--color-widget-background-highlight); padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">{{ .String "name" }}</span>
+                {{ end }}
+              </div>
+            </div>
+
+        - type: to-do

@@ -1,0 +1,21 @@
+server:
+  assets-path: /app/assets
+
+theme:
+  # Note: assets are cached by the browser, changes to the CSS file
+  # will not be reflected until the browser cache is cleared (Ctrl+F5)
+  custom-css-file: /assets/user.css
+  presets:
+    shadcn:
+      background-color: 240 3 12
+      primary-color: 278 48 74
+      negative-color: 355 100 72
+      positive-color: 82 96 67
+      contrast-multiplier: 1.2
+pages:
+  # It's not necessary to create a new file for each page and include it, you can simply
+  # put its contents here, though multiple pages are easier to manage when separated
+  - $include: server.yml
+  - $include: dev.yml
+  - $include: media.yml
+  - $include: reddit.yml

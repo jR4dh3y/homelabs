@@ -1,0 +1,115 @@
+/* =========================================
+   GLANCE CUSTOM CSS VARIABLES
+   =========================================
+   Edit these variables to change colors throughout all widgets.
+   After changes, clear browser cache (Ctrl+F5) to see updates.
+   ========================================= */
+
+/* Hide Glance branding/version from footer */
+.page-footer,
+footer,
+.branding,
+[class*="footer"] {
+  display: none !important;
+}
+
+
+:root {
+  /* Badge Colors */
+  --badge-success: #c3fb5b;           /* Green - for FREE, Easy, Ready states */
+  --badge-success-text: #1e1e20;         /* Text on success badges */
+  --badge-error: #ff6e79;             /* Red - for discounts, Hard, Error states */
+  --badge-error-text: #1e1e20;           /* Text on error badges */
+  --badge-warning: #ffb86c;           /* Orange - for Medium, Building states */
+  --badge-warning-text: #1e1e20;         /* Text on warning badges */
+  --badge-default: #999;              /* Gray - for unknown states */
+  
+  /* Audio Quality Badges */
+  --badge-lossless: #c3fb5b;          /* Lossless (Spotify green) */
+  --badge-lossless-text: #1e1e20;
+  --badge-atmos: #ff6e79;             /* Dolby Atmos (red) */
+  --badge-atmos-text: #1e1e20;
+  --badge-spatial: #ffb86c;           /* Spatial (purple) */
+  --badge-spatial-text: #1e1e20;
+  
+  /* Overlay & Shadow Colors */
+  --overlay-shadow: rgba(0,0,0,0.4);  /* Box shadow for album art */
+  --overlay-gradient: rgba(0,0,0,0.7); /* Gradient overlay on images */
+  
+  /* ASCII Art / Logo Colors (PICO) */
+  --ascii-red: #ff6e79;               /* P in PICO */
+  --ascii-yellow: #ffb86c;            /* I in PICO */
+  --ascii-green: #c3fb5b;             /* C in PICO */
+  --ascii-cyan: #6BC8C8;              /* O in PICO */
+  
+  /* Utility Colors */
+  --text-dark: #1e1e20;                  /* Black text */
+  --text-light: #dcd9e7;                 /* White text */
+}
+
+/* =========================================
+   UTILITY CLASSES
+   ========================================= */
+
+.no-background {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Epic Games Free - show separator between items, but not on last/only item */
+.epic-free-item {
+  border-bottom: 1px solid var(--color-widget-background-highlight);
+}
+.epic-free-item:last-child {
+  border-bottom: none;
+}
+
+/* Steam Deals Grid Layout */
+.steam-deals {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  padding: 8px 0;
+}
+
+.steam-deal-item {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-widget-background-highlight);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s ease;
+  border: none;
+}
+
+.steam-deal-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.steam-deal-item img {
+  width: 100% !important;
+  height: 50px !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+}
+
+.steam-deal-content {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.steam-deal-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.steam-deals:last-child {
+    border-bottom: none;
+}

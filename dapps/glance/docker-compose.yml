@@ -1,0 +1,31 @@
+services:
+  glance:
+    container_name: glance
+    image: glanceapp/glance
+    restart: unless-stopped
+    extra_hosts:
+      - "pico:host-gateway"
+    volumes:
+      - ./config:/app/config
+      - ./assets:/app/assets
+      - /etc/localtime:/etc/localtime:ro
+      # Docker socket for container monitoring
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Host filesystem for disk stats (read-only)
+      - /:/host:ro
+    ports:
+      - 8002:8080
+    env_file: .env
+    depends_on:
+      - netstat
+
+  netstat:
+    container_name: netstat
+    build: ./netstat
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - NETWORK_INTERFACE=${NETWORK_INTERFACE:-eth0}
+      - NETSTAT_PORT=8085
+    volumes:
+      - /sys/class/net:/sys/class/net:ro
