@@ -1,0 +1,33 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      USER_UID: ${GITEA_UID}
+      USER_GID: ${GITEA_GID}
+
+      GITEA__database__DB_TYPE: postgres
+      GITEA__database__HOST: ${GITEA_DB_HOST}
+      GITEA__database__NAME: ${GITEA_DB_NAME}
+      GITEA__database__USER: ${GITEA_DB_USER}
+      GITEA__database__PASSWD: ${GITEA_DB_PASSWORD}
+
+      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL}
+      GITEA__server__SSH_PORT: ${GITEA_SSH_PORT}
+    volumes:
+      - gitea_data:/data
+    ports:
+      - "${GITEA_HTTP_PORT}:3000"
+      - "${GITEA_SSH_BIND_PORT}:22"
+    networks:
+      - devops_net
+
+volumes:
+  gitea_data:
+
+networks:
+  devops_net:
+    external: true

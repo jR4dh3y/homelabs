@@ -1,5 +1,4 @@
 - name: Dev
-  width: wide
   columns:
     - size: full
       widgets:

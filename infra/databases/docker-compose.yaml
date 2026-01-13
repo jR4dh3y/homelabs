@@ -1,0 +1,45 @@
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_MAIN_DB}
+      MYSQL_USER: ${MYSQL_MAIN_USER}
+      MYSQL_PASSWORD: ${MYSQL_MAIN_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - db_net
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_MAIN_DB}
+      POSTGRES_USER: ${POSTGRES_MAIN_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_MAIN_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - db_net
+      - devops_net
+
+volumes:
+  mariadb_data:
+  postgres_data:
+
+networks:
+  db_net:
+  devops_net:
+    external: true

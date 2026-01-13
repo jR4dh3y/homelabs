@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  renovate:
+    image: renovate/renovate:latest
+    container_name: renovate
+    restart: unless-stopped
+    environment:
+      - RENOVATE_PLATFORM=gitea
+      - RENOVATE_ENDPOINT=http://gitea:3000
+      - RENOVATE_TOKEN=PASTE_YOUR_GITEA_TOKEN
+      - RENOVATE_AUTODISCOVER=true
+      - RENOVATE_GIT_AUTHOR=Renovate Bot <renovate@yourdomain.local>
+      - LOG_LEVEL=info
+    volumes:
+      - renovate_data:/usr/src/app
+    networks:
+      - devops_net
+
+volumes:
+  renovate_data:
+
+networks:
+  devops_net:
+    external: true

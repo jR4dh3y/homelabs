@@ -1,5 +1,4 @@
 - name: Reddit
-  width: wide
   columns:
     - size: full
       widgets:

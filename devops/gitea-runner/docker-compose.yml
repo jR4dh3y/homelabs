@@ -1,0 +1,24 @@
+services:
+  runner:
+    image: gitea/act_runner:latest
+    container_name: gitea-runner
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      GITEA_INSTANCE_URL: ${GITEA_INSTANCE_URL}
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_TOKEN}
+      GITEA_RUNNER_NAME: ${GITEA_RUNNER_NAME}
+      GITEA_RUNNER_LABELS: ${GITEA_RUNNER_LABELS}
+    volumes:
+      - runner_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - devops_net
+
+volumes:
+  runner_data:
+
+networks:
+  devops_net:
+    external: true
