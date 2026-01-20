@@ -13,9 +13,9 @@ theme:
       positive-color: 82 96 67
       contrast-multiplier: 1.2
 pages:
-  # It's not necessary to create a new file for each page and include it, you can simply
-  # put its contents here, though multiple pages are easier to manage when separated
   - $include: server.yml
   - $include: dev.yml
   - $include: media.yml
   - $include: reddit.yml
+  - $include: game.yml
+  - $include: f1.yml

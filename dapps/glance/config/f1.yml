@@ -1,0 +1,172 @@
+- name: Formula 1
+  columns:
+    - size: small
+      widgets:
+        - type: custom-api
+          title: Drivers Championship
+          cache: 1h
+          url: http://f1_api:4463/f1/drivers_standings/
+          template: |
+            <ul class="list list-gap-3 collapsible-container" data-collapse-after="3" style="font-size: 0.85em;">
+              {{ $drivers := .JSON.Array "drivers" }}
+              {{ if gt (len $drivers) 0 }}
+                {{ range $drivers }}
+                  <li class="flex gap-3 items-center" style="padding: 6px 0;">
+                    <div style="flex-shrink: 0; width: 20px; text-align: center; font-weight: bold; color: var(--color-primary); font-size: 0.9em;">{{ .Int "position" }}</div>
+                    <div style="width: 18px; flex-shrink: 0;">
+                      {{ if ne (.String "flag") "" }}<img src="https://flagcdn.com/24x18/{{ .String "flag" }}.png" alt="{{ .String "country" }}" style="width: 100%; border-radius: 2px;">{{ end }}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                      <a href="https://www.formula1.com" target="_blank" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 0.9em;">{{ .String "surname" }}</a>
+                    </div>
+                    <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary); min-width: 30px; text-align: right; font-size: 0.9em;">{{ .Int "points" }}</div>
+                  </li>
+                {{ end }}
+              {{ else }}
+                <p class="color-negative">No drivers data found.</p>
+              {{ end }}
+            </ul>
+
+        - type: custom-api
+          title: Constructors Championship
+          cache: 1h
+          url: http://f1_api:4463/f1/constructors_standings/
+          template: |
+            <ul class="list list-gap-3 collapsible-container" data-collapse-after="3" style="font-size: 0.85em;">
+              {{ $constructors := .JSON.Array "constructors" }}
+              {{ if gt (len $constructors) 0 }}
+                {{ range $constructors }}
+                  <li class="flex gap-3 items-center" style="padding: 6px 0;">
+                    <div style="flex-shrink: 0; width: 20px; text-align: center; font-weight: bold; color: var(--color-primary); font-size: 0.9em;">{{ .Int "position" }}</div>
+                    <div style="width: 18px; flex-shrink: 0;">
+                      {{ if ne (.String "flag") "" }}<img src="https://flagcdn.com/24x18/{{ .String "flag" }}.png" alt="{{ .String "country" }}" style="width: 100%; border-radius: 2px;">{{ end }}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                      <a href="https://www.formula1.com" target="_blank" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 0.9em;">{{ .String "team" }}</a>
+                    </div>
+                    <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary); min-width: 30px; text-align: right; font-size: 0.9em;">{{ .Int "points" }}</div>
+                  </li>
+                {{ end }}
+              {{ else }}
+                <p class="color-negative">No constructors data found.</p>
+              {{ end }}
+            </ul>
+
+    - size: full
+      widgets:
+        - type: custom-api
+          title: Next Race
+          cache: 1h
+          url: http://f1_api:4463/f1/next_race/
+          template: |
+            {{ $races := .JSON.Array "race" }}
+            {{ if gt (len $races) 0 }}
+              {{ $race := index $races 0 }}
+              {{ $nextEvent := .JSON "next_event" }}
+              {{ $circuit := $race.Object "circuit" }}
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                <!-- Left: Race Details -->
+                <div>
+                  <div style="margin-bottom: 16px;">
+                    <h3 class="size-h3 color-primary" style="margin: 0 0 8px 0;">{{ $nextEvent.String "session" }}</h3>
+                    <p class="color-subdue" style="margin: 0 0 12px 0;">Round {{ .JSON.Int "round" }} • {{ $nextEvent.String "date" }} at {{ $nextEvent.String "time" }}</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                      <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
+                        <span class="color-subdue" style="font-size: 0.85em; display: block;">Circuit</span>
+                        <div class="color-primary" style="font-weight: bold;">{{ $circuit.String "circuitName" }}</div>
+                      </div>
+                      <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
+                        <span class="color-subdue" style="font-size: 0.85em; display: block;">Laps</span>
+                        <div class="color-primary" style="font-weight: bold;">{{ $race.Int "laps" }}</div>
+                      </div>
+                      <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
+                        <span class="color-subdue" style="font-size: 0.85em; display: block;">Distance</span>
+                        <div class="color-primary" style="font-weight: bold;">{{ $race.Float "totalDistanceKm" | printf "%.2f" }} km</div>
+                      </div>
+                      <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
+                        <span class="color-subdue" style="font-size: 0.85em; display: block;">Fastest Lap</span>
+                        <div class="color-primary" style="font-weight: bold; font-size: 0.95em;">{{ $circuit.String "lapRecord" }}</div>
+                      </div>
+                    </div>
+                    
+                    <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
+                      <span class="color-subdue" style="font-size: 0.85em; display: block; margin-bottom: 4px;">Fastest Lap Holder</span>
+                      <div class="color-primary" style="font-weight: bold;">{{ $circuit.String "fastestLapDriverName" }}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Right: Track Map & Weather -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <div style="display: flex; align-items: center; justify-content: center; background: var(--color-widget-background-highlight); border-radius: 4px; padding: 12px; flex: 1; min-height: 200px;">
+                    <img src="http://f1_api:4463/f1/next_map/" alt="Track Map" style="max-width: 100%; height: auto; border-radius: 4px;">
+                  </div>
+                </div>
+              </div>
+            {{ else }}
+              <p class="color-negative">No race data available.</p>
+            {{ end }}
+
+        - type: custom-api
+          title: Last Race Results
+          cache: 2h
+          url: https://f1api.dev/api/2025/races
+          template: |
+            {{ $races := .JSON.Array "races" }}
+            {{ if gt (len $races) 0 }}
+              {{ $lastRace := index $races (sub (len $races) 1) }}
+              {{ if ne $lastRace nil }}
+                {{ $results := $lastRace.Array "results" }}
+                {{ if gt (len $results) 0 }}
+                  <ul class="list list-gap-3" style="font-size: 0.9em;">
+                    <li style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-widget-background-highlight);">
+                      <p class="color-subdue" style="margin: 0 0 4px 0; font-size: 0.85em;">{{ $lastRace.String "name" }}</p>
+                      <h4 class="color-primary" style="margin: 0; font-size: 1em; font-weight: bold;">Race Results</h4>
+                    </li>
+                    {{ range $results }}
+                      {{ if lt (.Int "position") 4 }}
+                        <li class="flex gap-3 items-center" style="padding: 6px 0;">
+                          <div style="flex-shrink: 0; width: 28px; text-align: center; font-weight: bold; color: {{ if eq (.Int "position") 1 }}#FFD700{{ else if eq (.Int "position") 2 }}#C0C0C0{{ else }}#CD7F32{{ end }};">{{ .Int "position" }}</div>
+                          <div style="flex: 1; min-width: 0;">
+                            <div class="color-primary" style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .Object "driver" | index "surname" }}</div>
+                            <div class="color-subdue" style="font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .Object "team" | index "name" }}</div>
+                          </div>
+                          <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary);">+{{ .Int "points" }} pts</div>
+                        </li>
+                      {{ end }}
+                    {{ end }}
+                  </ul>
+                {{ else }}
+                  <p class="color-negative">No race results found.</p>
+                {{ end }}
+              {{ else }}
+                <p class="color-subdue">No race data available.</p>
+              {{ end }}
+            {{ else }}
+              <p class="color-subdue">No races data available.</p>
+            {{ end }}
+
+    - size: small
+      widgets:
+        - type: custom-api
+          title: Circuit Weather
+          cache: 30m
+          url: http://f1_api:4463/f1/next_race/
+          template: |
+            {{ $races := .JSON.Array "race" }}
+            {{ if gt (len $races) 0 }}
+              {{ $race := index $races 0 }}
+              {{ $circuit := $race.Object "circuit" }}
+              {{ $city := $circuit.String "city" }}
+              {{ $country := $circuit.String "country" }}
+              <div style="padding: 8px 0;">
+                <p class="color-subdue" style="margin: 0 0 8px 0; font-size: 0.85em; text-align: center;">{{ $city }}, {{ $country }}</p>
+                <div style="background: var(--color-widget-background-highlight); padding: 10px; border-radius: 4px; text-align: center;">
+                  <span class="color-subdue" style="font-size: 0.8em; display: block; margin-bottom: 4px;">Track Location</span>
+                  <div class="color-primary" style="font-size: 1.4em; font-weight: bold;">{{ $city }}</div>
+                </div>
+              </div>
+            {{ else }}
+              <p class="color-negative">No race data available</p>
+            {{ end }}

@@ -1,0 +1,188 @@
+- name: Gaming
+  columns:
+    # Main Column - Deals (Toggleable)
+    - size: full
+      widgets:
+        - type: group
+          title: Game Deals
+          widgets:
+            - type: custom-api
+              title: Epic Games Free
+              cache: 1h
+              url: https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions
+              template: | # html
+                <div class="epic-free-games">
+                {{ range .JSON.Array "data.Catalog.searchStore.elements" }}
+                  {{ if .Exists "promotions.promotionalOffers.0.promotionalOffers.0" }}
+                    {{ $promo := index (.Array "promotions.promotionalOffers.0.promotionalOffers") 0 }}
+                    {{ if eq ($promo.Int "discountSetting.discountPercentage") 0 }}
+                      <div class="epic-free-item" style="display: flex; gap: 12px; align-items: center; padding: 8px 0;">
+                        {{ $img := index (.Array "keyImages") 0 }}
+                        <img src="{{ $img.String "url" }}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;" />
+                        <div style="flex: 1;">
+                          <div style="font-weight: bold; color: var(--color-primary);">{{ .String "title" }}</div>
+                          <div style="font-size: 0.85em; color: var(--color-text-subdue);">FREE until {{ $promo.String "endDate" | parseTime "rfc3339" | formatTime "Jan 2" }}</div>
+                        </div>
+                        <span style="background-color: var(--badge-success); color: var(--badge-success-text); padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold;">FREE</span>
+                      </div>
+                    {{ end }}
+                  {{ end }}
+                {{ end }}
+                </div>
+
+            - type: custom-api
+              title: Steam Deals
+              cache: 1h
+              url: https://api.isthereanydeal.com/deals/v2?key=${ITAD_API_KEY}&country=IN&shops=61&limit=20&sort=-trending
+              template: | # html
+                <div class="steam-deals">
+                {{ range .JSON.Array "list" }}
+                  {{ $flag := .String "deal.flag" }}
+                  <div class="steam-deal-item">
+                    <img src="{{ .String "assets.banner600" }}" />
+                    <span class="steam-deal-badge" style="background-color: var(--badge-error); color: var(--badge-error-text); padding: 3px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">-{{ .Int "deal.cut" }}%</span>
+                    
+                    <div class="steam-deal-content">
+                      <a href="{{ .String "deal.url" }}" target="_blank" rel="noreferrer" style="font-weight: bold; font-size: 0.9em; color: var(--color-primary); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .String "title" }}</a>
+                      
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.8em; color: var(--color-text-subdue);">
+                          <span style="text-decoration: line-through; opacity: 0.7;">₹{{ .Float "deal.regular.amount" | printf "%.0f" }}</span>
+                          <span style="color: var(--badge-success); font-weight: bold; margin-left: 4px;">₹{{ .Float "deal.price.amount" | printf "%.0f" }}</span>
+                        </div>
+                        
+                        {{ if eq $flag "H" }}
+                          <span style="background-color: var(--badge-success); color: var(--badge-success-text); padding: 2px 5px; border-radius: 4px; font-size: 0.65em; font-weight: bold;">LOWEST</span>
+                        {{ else }}
+                          {{ $price := .Float "deal.price.amount" }}
+                          {{ $low1y := .Float "deal.historyLow_1y.amount" }}
+                          {{ if and (gt $low1y 0.0) (le $price $low1y) }}
+                            <span style="background-color: var(--badge-success); opacity: 0.8; color: var(--badge-success-text); padding: 2px 5px; border-radius: 4px; font-size: 0.65em; font-weight: bold;">1Y LOW</span>
+                          {{ end }}
+                        {{ end }}
+                      </div>
+                    </div>
+                  </div>
+                {{ end }}
+                </div>
+    - size: small
+      widgets:
+        - type: custom-api
+          title: Steam Profile
+          cache: 1h
+          url: https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key=${STEAM_API_KEY}&steamid=${STEAM_USER}
+          template: |
+            <div class="steam-user-stats" style="display: flex; gap: 12px; align-items: center; position: relative;">
+              {{ $summaryUrl := "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${STEAM_USER}" }}
+              {{ $summary := newRequest $summaryUrl | getResponse }}
+              {{ $players := $summary.JSON.Array "response.players" }}
+              {{ if gt (len $players) 0 }}
+                {{ $player := index $players 0 }}
+                <!-- Left: Profile Info -->
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; flex-shrink: 0;">
+                  <a href="{{ $player.String "profileurl" }}" style="margin-bottom: 0.5em;"><img src="{{ $player.String "avatarmedium" }}" alt="Avatar" style="border-radius: var(--border-radius); width: 80px;"></a>
+                  <h3 class="size-h4 color-primary" style="margin: 0.25em 0; font-size: 0.9em;">{{ $player.String "personaname" }}</h3>
+                  <p style="margin: 0.25em 0; font-size: 0.85em;">
+                    {{ $status := $player.Int "personastate" }}
+                    {{ if eq $status 0 }}<span class="color-negative">Offline</span>{{ end }}
+                    {{ if eq $status 1 }}<span class="color-positive">Online</span>{{ end }}
+                    {{ if eq $status 2 }}<span class="color-highlight">Busy</span>{{ end }}
+                    {{ if eq $status 3 }}<span class="color-subdue">Away</span>{{ end }}
+                    {{ if eq $status 4 }}<span class="color-subdue">Snooze</span>{{ end }}
+                    {{ if eq $status 5 }}<span class="color-primary">Looking to trade</span>{{ end }}
+                    {{ if eq $status 6 }}<span class="color-primary">Looking to play</span>{{ end }}
+                  </p>
+                </div>
+                <!-- Right: Stats Grid -->
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.9em; flex: 1;">
+                  <!-- Steam Level from IPlayerService -->
+                  {{ $level := .JSON.Int "response.player_level" }}
+                  <div style="background: var(--color-widget-background-highlight); padding: 10px; border-radius: 4px;">
+                    <span class="color-subdue" style="font-size: 0.9em;">Level</span>
+                    <div class="color-primary" style="font-size: 1.5em; font-weight: bold;">Lvl {{ $level }}</div>
+                  </div>
+                  <!-- Currently Playing -->
+                  {{ $gameInfo := $player.String "gameextrainfo" }}
+                  <div style="background: var(--color-widget-background-highlight); padding: 10px; border-radius: 4px;">
+                    <span class="color-subdue" style="font-size: 0.9em;">Playing</span>
+                    <div class="color-primary" style="font-size: 1em; word-wrap: break-word;">{{ if ne $gameInfo "" }}{{ $gameInfo }}{{ else }}—{{ end }}</div>
+                  </div>
+                </div>
+              {{ else }}
+                <p class="color-negative">No player data found.</p>
+              {{ end }}
+            </div>
+
+        - type: custom-api
+          title: Friends
+          cache: 1m
+          url: https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${USER_ID1},${USER_ID2}
+          template: |
+            <ul class="list list-gap-5 collapsible-container" data-collapse-after="3" style="font-size: 0.9em;">
+              {{ $players := .JSON.Array "response.players" }}
+              {{ if gt (len $players) 0 }}
+                {{ range $players }}
+                  {{ $status := .Int "personastate" }}
+                  {{ $colorClass := "color-subdue" }}
+                  {{ $statusText := "Offline" }}
+                  {{ if eq $status 1 }}
+                    {{ $colorClass = "color-positive" }}
+                    {{ $statusText = "Online" }}
+                  {{ else if eq $status 2 }}
+                    {{ $colorClass = "color-highlight" }}
+                    {{ $statusText = "Busy" }}
+                  {{ else if eq $status 3 }}
+                    {{ $colorClass = "color-primary" }}
+                    {{ $statusText = "Away" }}
+                  {{ end }}
+                  <li class="flex gap-5 items-center" style="padding: 4px 0;">
+                    <a href="{{ .String "profileurl" }}" style="width: 2.5rem; height: 2.5rem; flex-shrink: 0;">
+                      <img style="aspect-ratio: 1; border-radius: var(--border-radius); width: 100%;" src="{{ .String "avatarmedium" }}" alt="Avatar" loading="lazy">
+                    </a>
+                    <div style="flex: 1; min-width: 0;">
+                      <a href="{{.String "profileurl"}}" title="{{.String "personaname"}}" class="size-h5 block" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0;">{{ .String "personaname" }} <span class="{{ $colorClass }}" style="font-size: 0.8em; margin-left: 6px;">{{ $statusText }}</span></a>
+                    </div>
+                  </li>
+                {{ end }}
+              {{ else }}
+                <p class="color-negative">No friends data found.</p>
+              {{ end }}
+            </ul>
+
+        - type: custom-api
+          title: Recently Played
+          cache: 1h
+          url: http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=${STEAM_API_KEY}&steamid=${STEAM_USER}&format=json
+          template: |
+            <div style="font-size: 0.9em;">
+              {{ if eq .Response.StatusCode 200 }}
+                {{ $games := .JSON.Array "response.games" }}
+                {{ if gt (len $games) 0 }}
+                  <ul class="list list-gap-5 collapsible-container" data-collapse-after="3">
+                    {{ range $games }}
+                      <li style="display: flex; align-items: center; padding: 4px 0;">
+                        <a href="https://store.steampowered.com/app/{{ .Int "appid" }}" target="_blank" style="flex-shrink: 0; margin-right: 8px;">
+                          <img src="http://media.steampowered.com/steamcommunity/public/images/apps/{{ .Int "appid" }}/{{ .String "img_icon_url" }}.jpg" alt="{{ .String "name" }}" style="width: 32px; border-radius: 4px;">
+                        </a>
+                        <div style="flex: 1; min-width: 0;">
+                          <a href="https://store.steampowered.com/app/{{ .Int "appid" }}" class="size-h5 color-primary" target="_blank" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ .String "name" }}
+                          </a>
+                          <span class="color-subdue" style="font-size: 0.8em;">
+                            {{ if gt (toFloat (.Int "playtime_2weeks")) 60.0 }}
+                              {{ printf "%.1f hrs" (div (toFloat (.Int "playtime_2weeks")) 60.0) }}
+                            {{ else }}
+                              {{ .Int "playtime_2weeks" }}m
+                            {{ end }}
+                          </span>
+                        </div>
+                      </li>
+                    {{ end }}
+                  </ul>
+                {{ else }}
+                  <p class="color-negative">No games found.</p>
+                {{ end }}
+              {{ else }}
+                <p class="color-negative">Error loading games.</p>
+              {{ end }}
+            </div>
