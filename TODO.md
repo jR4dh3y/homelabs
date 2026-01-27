@@ -11,3 +11,7 @@
 [ ] Deploy Excalidraw: Self-hosted virtual whiteboard for diagramming.
 [ ] Deploy LGTM Stack: Loki (logs), Grafana (visuals), Tempo (traces), Mimir (metrics).
 [ ] Deploy Project Management: Host a PM/Notes tool (e.g., Focalboard, Vikunja, or Outline).
+
+
+
+

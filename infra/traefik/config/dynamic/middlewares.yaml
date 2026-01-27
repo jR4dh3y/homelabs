@@ -1,0 +1,56 @@
+# Dynamic Middlewares Configuration
+http:
+  middlewares:
+    # Security headers for all services
+    secure-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        referrerPolicy: "strict-origin-when-cross-origin"
+
+    # Rate limiting
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1s
+
+    # Compress responses
+    gzip-compress:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
+
+    # Default chain for most services
+    default-chain:
+      chain:
+        middlewares:
+          - secure-headers
+          - gzip-compress
+
+    # Chain with rate limiting (for public APIs)
+    public-chain:
+      chain:
+        middlewares:
+          - rate-limit
+          - secure-headers
+          - gzip-compress
+
+    # Internal services (no rate limit, relaxed headers)
+    internal-chain:
+      chain:
+        middlewares:
+          - gzip-compress
+
+    # Redirect www to non-www
+    www-redirect:
+      redirectRegex:
+        regex: "^https://www\\.(.*)"
+        replacement: "https://${1}"
+        permanent: true

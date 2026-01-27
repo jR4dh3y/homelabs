@@ -1,0 +1,43 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    restart: unless-stopped
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    env_file:
+      - .env
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./config/dynamic:/etc/traefik/dynamic:ro
+      - ./certs/acme.json:/acme.json
+      - ./logs:/var/log/traefik
+    
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    
+    networks:
+      - proxy
+      # - traefik-net (Removed)
+      # App networks (Removed consolidated into proxy)
+    
+    labels:
+      # Enable Traefik for this container
+      - "traefik.enable=true"
+      
+      # Dashboard (no auth)
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.jr4.in`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=web"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+
+networks:
+  proxy:
+    external: true

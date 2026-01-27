@@ -1,0 +1,27 @@
+services:
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: big-bear-open-webui
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    
+    volumes:
+      - /DATA/AppData/big-bear-open-webui/data:/app/backend/data
+    
+    networks:
+      - proxy
+    
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+
+networks:
+  proxy:
+    external: true

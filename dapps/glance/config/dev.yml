@@ -177,73 +177,66 @@
             - type: group
               widgets:
                 - type: custom-api
-                  title: Syntax & Snippet
-                  url: https://api.github.com/repos/Chalarangelo/30-seconds-of-code/contents/content/snippets/js/s
-                  cache: 24h
-                  template: |
-                    {{ $files := .JSON.Array "" }}
-                    {{ $count := len $files }}
-                    {{ if gt $count 0 }}
-                      {{ $idx := mod (now.Nanosecond) $count }}
-                      {{ $file := index $files $idx }}
-                      <div style="padding: 8px;">
-                        <div style="font-weight: bold; margin-bottom: 8px; color: var(--color-primary); text-transform: capitalize;">
-                          {{ $file.String "name" | replaceAll ".md" "" | replaceAll "-" " " }}
-                        </div>
-                        <div style="font-size: 0.9em; margin-bottom: 8px;">
-                          <a href="{{ $file.String "html_url" }}" target="_blank" style="color: var(--color-text-main);">View on GitHub</a>
-                        </div>
-                        <div style="font-size: 0.8em; color: var(--color-text-subdue);">
-                          (Content fetching unavailable via API)
-                        </div>
-                      </div>
-                    {{ end }}
+                  title: Trending Repositories
+                  cache: 24h 
+                  url: 'https://api.ossinsight.io/v1/trends/repos/?period=week&language=all'
+                  template: | # html
+                    <ul class="list list-gap-10 collapsible-container" data-collapse-after="3">
+                      {{ $rows := .JSON.Array "data.rows" }}
+                      {{ if eq (len $rows) 0 }}
+                        {{ $rows = .JSON.Array "rows" }}
+                      {{ end }}
+                      {{ if gt (len $rows) 0 }}
+                        {{ range $rows }}
+                          <li>
+                            <a class="color-primary-if-not-visited" href="https://github.com/{{ .String "repo_name" }}">{{ .String "repo_name" }}</a> 
+                            <ul class="list-horizontal-text">
+                                <li class="color-highlight"> {{.String "primary_language"}} </li>
 
-                - type: custom-api
-                  title: Tech Concepts Flashcard
-                  url: https://api.github.com/users/defunkt
-                  cache: 24h
-                  template: |
-                    {{ $day := mod (now.YearDay) 7 }}
-                    <div style="padding: 8px;">
-                      <div style="font-weight: bold; margin-bottom: 8px; color: var(--color-primary);">
-                        {{ if eq $day 0 }}
-                          What is the CAP Theorem?
-                        {{ else if eq $day 1 }}
-                          What does ACID stand for in databases?
-                        {{ else if eq $day 2 }}
-                          Horizontal vs Vertical Scaling?
-                        {{ else if eq $day 3 }}
-                          Difference between TCP and UDP?
-                        {{ else if eq $day 4 }}
-                          What are the SOLID principles?
-                        {{ else if eq $day 5 }}
-                          REST vs GraphQL?
-                        {{ else }}
-                          What is a Reverse Proxy?
+                                <li style="display: flex; align-items: center;gap: 4px;">
+                                  {{ .Int "stars" }}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                  </svg>
+                                </li>
+
+                                <li style="display: flex; align-items: center;gap: 4px;">
+                                  {{ .Int "forks" }}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <circle cx="12" cy="18" r="2" />
+                                    <circle cx="7" cy="6" r="2" />
+                                    <circle cx="17" cy="6" r="2" />
+                                    <path d="M7 8v2a2 2 0 0 0 2 2h6a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M12 12l0 4" />
+                                  </svg>
+                                </li>
+
+                                <li style="display: flex; align-items: center;gap: 4px;">
+                                  {{ .Int "pull_requests" }}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                    <circle cx="6" cy="6" r="3"></circle>
+                                    <circle cx="18" cy="18" r="3"></circle>
+                                    <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+                                    <line x1="6" y1="9" x2="6" y2="21"></line>
+                                  </svg>
+                                </li>
+
+                            </ul>
+                            <ul class="list collapsible-container">
+                              <li style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="color-subdue">
+                                Contributors: {{ .String "contributor_logins"}}
+                              </li>
+                              <li>
+                                {{ .String "description" }}
+                              </li>
+                            </ul>
+                          </li>
                         {{ end }}
-                      </div>
-                      <details>
-                        <summary style="cursor: pointer; color: var(--color-text-subdue); font-size: 0.9em;">Reveal Answer</summary>
-                        <div style="margin-top: 8px; color: var(--color-text-main); font-size: 0.9em; line-height: 1.4;">
-                          {{ if eq $day 0 }}
-                            <strong>Consistency, Availability, Partition Tolerance.</strong><br>In a distributed system, you can only pick two.
-                          {{ else if eq $day 1 }}
-                            <strong>Atomicity, Consistency, Isolation, Durability.</strong><br>Properties that guarantee database transactions are processed reliably.
-                          {{ else if eq $day 2 }}
-                            <strong>Horizontal:</strong> Adding more machines (scaling out).<br><strong>Vertical:</strong> Adding more power (CPU/RAM) to an existing machine (scaling up).
-                          {{ else if eq $day 3 }}
-                            <strong>TCP:</strong> Reliable, connection-oriented, ordered (Web, Email).<br><strong>UDP:</strong> Unreliable, connectionless, fast (Streaming, Gaming).
-                          {{ else if eq $day 4 }}
-                            Single responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion.
-                          {{ else if eq $day 5 }}
-                            <strong>REST:</strong> Resource-based, multiple endpoints, over-fetching common.<br><strong>GraphQL:</strong> Query-based, single endpoint, client requests exactly what it needs.
-                          {{ else }}
-                            A server that sits in front of web servers and forwards client requests to those web servers. Used for security, load balancing, and caching.
-                          {{ end }}
-                        </div>
-                      </details>
-                    </div>
+                      {{ else }}
+                        <p class="color-negative">No trending repositories found. Please check the API.</p>
+                      {{ end }}
+                    </ul>
     - size: small
       widgets:
         - type: custom-api

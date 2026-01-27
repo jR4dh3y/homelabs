@@ -1,3 +1,5 @@
 # Swingmusic configuration and data
 dapps/swingmusic/config/
 .env
+dapps/steam-headless/data
+dapps/convertx/data

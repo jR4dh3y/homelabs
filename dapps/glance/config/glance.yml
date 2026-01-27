@@ -1,6 +1,10 @@
 server:
   assets-path: /app/assets
-
+auth:
+  secret-key: ${GLANCE_SECRET_KEY}
+  users:
+    radhey:
+      password: ${ADMIN_PASSWORD}
 theme:
   # Note: assets are cached by the browser, changes to the CSS file
   # will not be reflected until the browser cache is cleared (Ctrl+F5)
@@ -16,6 +20,6 @@ pages:
   - $include: server.yml
   - $include: dev.yml
   - $include: media.yml
-  - $include: reddit.yml
   - $include: game.yml
+  - $include: reddit.yml
   - $include: f1.yml

@@ -14,11 +14,11 @@ services:
       - runner_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - devops_net
+      - proxy
 
 volumes:
   runner_data:
 
 networks:
-  devops_net:
+  proxy:
     external: true

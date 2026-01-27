@@ -1,0 +1,231 @@
+# Dynamic Services Configuration
+# Define routes for all your homelab services
+# Subdomain format: service.jr4.in -> container:port
+
+http:
+  routers:
+    # ============================================
+    # DASHBOARD & MONITORING
+    # ============================================
+    
+    glance:
+      rule: "Host(`home.jr4.in`) || Host(`glance.jr4.in`)"
+      entryPoints:
+        - web
+      service: glance
+      middlewares:
+        - default-chain
+
+    portainer:
+      rule: "Host(`portainer.jr4.in`) || Host(`docker.jr4.in`)"
+      entryPoints:
+        - web
+      service: portainer
+      middlewares:
+        - default-chain
+
+    # ============================================
+    # MEDIA
+    # ============================================
+    
+    jellyfin:
+      rule: "Host(`jellyfin.jr4.in`) || Host(`media.jr4.in`)"
+      entryPoints:
+        - web
+      service: jellyfin
+      middlewares:
+        - default-chain
+
+    swingmusic:
+      rule: "Host(`music.jr4.in`) || Host(`swing.jr4.in`)"
+      entryPoints:
+        - web
+      service: swingmusic
+      middlewares:
+        - default-chain
+
+    qbittorrent:
+      rule: "Host(`qbit.jr4.in`) || Host(`torrent.jr4.in`)"
+      entryPoints:
+        - web
+      service: qbittorrent
+      middlewares:
+        - default-chain
+
+    # ============================================
+    # AI & TOOLS
+    # ============================================
+    
+    openwebui:
+      rule: "Host(`ai.jr4.in`) || Host(`chat.jr4.in`)"
+      entryPoints:
+        - web
+      service: openwebui
+      middlewares:
+        - default-chain
+
+    excalidraw:
+      rule: "Host(`draw.jr4.in`) || Host(`excalidraw.jr4.in`)"
+      entryPoints:
+        - web
+      service: excalidraw
+      middlewares:
+        - default-chain
+
+    # ============================================
+    # DEVOPS
+    # ============================================
+    
+    gitea:
+      rule: "Host(`git.jr4.in`) || Host(`gitea.jr4.in`)"
+      entryPoints:
+        - web
+      service: gitea
+      middlewares:
+        - default-chain
+
+    # ============================================
+    # UTILITIES
+    # ============================================
+    
+    vidown:
+      rule: "Host(`vidown.jr4.in`) || Host(`dl.jr4.in`)"
+      entryPoints:
+        - web
+      service: vidown
+      middlewares:
+        - default-chain
+
+    anyconverter:
+      rule: "Host(`convert.jr4.in`) || Host(`anyconv.jr4.in`)"
+      entryPoints:
+        - web
+      service: anyconverter
+      middlewares:
+        - default-chain
+
+    convertx:
+      rule: "Host(`convertx.jr4.in`)"
+      entryPoints:
+        - web
+      service: convertx
+      middlewares:
+        - default-chain
+
+    filemanager:
+      rule: "Host(`files.jr4.in`) || Host(`fm.jr4.in`)"
+      entryPoints:
+        - web
+      service: filemanager
+      middlewares:
+        - default-chain
+
+    # Steam Headless - noVNC web interface
+    steam-novnc:
+      rule: "Host(`game.jr4.in`) || Host(`steam.jr4.in`)"
+      entryPoints:
+        - web
+      service: steam-novnc
+
+    # Steam Headless - Sunshine admin panel
+    steam-sunshine:
+      rule: "Host(`sunshine.jr4.in`)"
+      entryPoints:
+        - web
+      service: steam-sunshine
+
+    f1api:
+      rule: "Host(`f1.jr4.in`) || Host(`f1api.jr4.in`)"
+      entryPoints:
+        - web
+      service: f1api
+      middlewares:
+        - public-chain
+
+  # ============================================
+  # SERVICE DEFINITIONS
+  # Using host.docker.internal with host-mapped ports
+  # for containers not on shared networks
+  # ============================================
+  
+  services:
+    # --- Containers on shared networks (use container name) ---
+    
+    glance:
+      loadBalancer:
+        servers:
+          - url: "http://glance:8080"
+
+    swingmusic:
+      loadBalancer:
+        servers:
+          - url: "http://swingmusic:1970"
+
+    openwebui:
+      loadBalancer:
+        servers:
+          - url: "http://big-bear-open-webui:8080"
+
+    vidown:
+      loadBalancer:
+        servers:
+          - url: "http://vidown-frontend:3000"
+
+    anyconverter:
+      loadBalancer:
+        servers:
+          - url: "http://anyconv:3000"
+
+    filemanager:
+      loadBalancer:
+        servers:
+          - url: "http://filemanager-nginx:80"
+
+    f1api:
+      loadBalancer:
+        servers:
+          - url: "http://f1_api:4463"
+
+    # --- Containers via host ports (until networks are aligned) ---
+    
+    portainer:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:9000"
+
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8097"
+
+    qbittorrent:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8181"
+
+    convertx:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3333"
+
+    gitea:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4000"
+
+    excalidraw:
+      loadBalancer:
+        servers:
+          - url: "http://excalidraw:80"
+
+    # --- Host networking containers ---
+    
+    steam-novnc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.2:8083"
+
+    steam-sunshine:
+      loadBalancer:
+        servers:
+          - url: "https://host.docker.internal:47990"

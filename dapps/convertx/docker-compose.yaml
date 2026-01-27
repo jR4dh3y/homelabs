@@ -1,0 +1,27 @@
+services:
+  convertx:
+    image: c4illin/convertx:v0.14.1
+    container_name: convertx
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    environment:
+      - HTTP_ALLOWED=true
+      - JWT_SECRET=${JWT_SECRET}
+    
+    volumes:
+      - ./data:/app/data
+    
+    networks:
+      - proxy
+    
+    deploy:
+      resources:
+        reservations:
+          memory: 512M
+
+networks:
+  proxy:
+    external: true

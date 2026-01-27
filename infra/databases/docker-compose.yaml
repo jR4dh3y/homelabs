@@ -16,6 +16,7 @@ services:
       - mariadb_data:/var/lib/mysql
     networks:
       - db_net
+      - proxy
 
   postgres:
     image: postgres:16
@@ -33,7 +34,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - db_net
-      - devops_net
+      - proxy
 
 volumes:
   mariadb_data:
@@ -41,5 +42,5 @@ volumes:
 
 networks:
   db_net:
-  devops_net:
+  proxy:
     external: true

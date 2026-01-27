@@ -1,0 +1,38 @@
+# Traefik Static Configuration
+# jr4.in homelab setup
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+# API and Dashboard
+api:
+  dashboard: true
+  insecure: true # Enable dashboard on port 8080 (optional) or just use route
+
+# Logging
+log:
+  level: DEBUG
+
+# Entry Points
+entryPoints:
+  web:
+    address: ":80"
+    # No redirection, just serving HTTP
+    # Cloudflare Tunnel handles HTTPS termination
+    
+# Providers
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: traefik-net
+    watch: true
+  
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+# Ping for healthchecks
+ping:
+  entryPoint: web

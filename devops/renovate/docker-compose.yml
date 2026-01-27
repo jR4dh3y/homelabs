@@ -15,11 +15,11 @@ services:
     volumes:
       - renovate_data:/usr/src/app
     networks:
-      - devops_net
+      - proxy
 
 volumes:
   renovate_data:
 
 networks:
-  devops_net:
+  proxy:
     external: true

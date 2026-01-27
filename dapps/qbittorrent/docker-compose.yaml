@@ -1,0 +1,30 @@
+services:
+  qbittorrent:
+    image: ghcr.io/hotio/qbittorrent:release-5.0.4
+    container_name: qbittorrent
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - UMASK=002
+    
+    volumes:
+      - /DATA/AppData/qbittorrent/config:/config
+      - /DATA:/DATA
+    
+    networks:
+      - proxy
+    
+    deploy:
+      resources:
+        reservations:
+          memory: 256M
+
+networks:
+  proxy:
+    external: true

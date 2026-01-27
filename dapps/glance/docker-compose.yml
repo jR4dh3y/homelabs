@@ -3,24 +3,20 @@ services:
     container_name: glance
     image: glanceapp/glance
     restart: unless-stopped
-    networks:
-      - glance-net
     extra_hosts:
       - "pico:host-gateway"
     volumes:
       - ./config:/app/config
       - ./assets:/app/assets
       - /etc/localtime:/etc/localtime:ro
-      # Docker socket for container monitoring
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Host filesystem for disk stats (read-only)
       - /:/host:ro
-    ports:
-      - 8002:8080
     env_file: .env
     depends_on:
       - netstat
       - f1_api
+    networks:
+      - proxy
 
   netstat:
     container_name: netstat
@@ -37,15 +33,13 @@ services:
     container_name: f1_api
     image: skyallinott/f1_api:latest
     restart: unless-stopped
-    networks:
-      - glance-net
     environment:
       - TIMEZONE=UTC
       - TRACK_COLOUR=#e5d486
       - EVENT_DETAIL=main
-    ports:
-      - 4463:4463
+    networks:
+      - proxy
 
 networks:
-  glance-net:
-    driver: bridge
+  proxy:
+    external: true

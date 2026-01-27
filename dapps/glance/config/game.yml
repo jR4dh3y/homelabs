@@ -116,24 +116,46 @@
         - type: custom-api
           title: Friends
           cache: 1m
-          url: https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${USER_ID1},${USER_ID2}
+          url: https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${USER_ID1},${USER_ID2},${USER_ID3},${USER_ID4}
           template: |
-            <ul class="list list-gap-5 collapsible-container" data-collapse-after="3" style="font-size: 0.9em;">
+            <ul class="list list-gap-5" style="font-size: 0.9em;">
               {{ $players := .JSON.Array "response.players" }}
               {{ if gt (len $players) 0 }}
                 {{ range $players }}
                   {{ $status := .Int "personastate" }}
                   {{ $colorClass := "color-subdue" }}
                   {{ $statusText := "Offline" }}
-                  {{ if eq $status 1 }}
-                    {{ $colorClass = "color-positive" }}
-                    {{ $statusText = "Online" }}
+                  {{ $gameInfo := .String "gameextrainfo" }}
+                  {{ if eq $status 0 }}
+                    {{ $colorClass = "color-subdue" }}
+                    {{ $statusText = "Offline" }}
+                  {{ else if eq $status 1 }}
+                    {{ if ne $gameInfo "" }}
+                      {{ $colorClass = "color-positive" }}
+                      {{ $statusText = $gameInfo }}
+                    {{ else }}
+                      {{ $colorClass = "color-primary" }}
+                      {{ $statusText = "Online" }}
+                    {{ end }}
                   {{ else if eq $status 2 }}
-                    {{ $colorClass = "color-highlight" }}
-                    {{ $statusText = "Busy" }}
+                    {{ if ne $gameInfo "" }}
+                      {{ $colorClass = "color-positive" }}
+                      {{ $statusText = $gameInfo }}
+                    {{ else }}
+                      {{ $colorClass = "color-primary" }}
+                      {{ $statusText = "Online" }}
+                    {{ end }}
                   {{ else if eq $status 3 }}
-                    {{ $colorClass = "color-primary" }}
-                    {{ $statusText = "Away" }}
+                    {{ if ne $gameInfo "" }}
+                      {{ $colorClass = "color-positive" }}
+                      {{ $statusText = $gameInfo }}
+                    {{ else }}
+                      {{ $colorClass = "color-subdue" }}
+                      {{ $statusText = "Away" }}
+                    {{ end }}
+                  {{ else if eq $status 4 }}
+                    {{ $colorClass = "color-subdue" }}
+                    {{ $statusText = "Snooze" }}
                   {{ end }}
                   <li class="flex gap-5 items-center" style="padding: 4px 0;">
                     <a href="{{ .String "profileurl" }}" style="width: 2.5rem; height: 2.5rem; flex-shrink: 0;">
@@ -154,35 +176,33 @@
           cache: 1h
           url: http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=${STEAM_API_KEY}&steamid=${STEAM_USER}&format=json
           template: |
-            <div style="font-size: 0.9em;">
-              {{ if eq .Response.StatusCode 200 }}
-                {{ $games := .JSON.Array "response.games" }}
-                {{ if gt (len $games) 0 }}
-                  <ul class="list list-gap-5 collapsible-container" data-collapse-after="3">
-                    {{ range $games }}
-                      <li style="display: flex; align-items: center; padding: 4px 0;">
-                        <a href="https://store.steampowered.com/app/{{ .Int "appid" }}" target="_blank" style="flex-shrink: 0; margin-right: 8px;">
-                          <img src="http://media.steampowered.com/steamcommunity/public/images/apps/{{ .Int "appid" }}/{{ .String "img_icon_url" }}.jpg" alt="{{ .String "name" }}" style="width: 32px; border-radius: 4px;">
+            {{ if eq .Response.StatusCode 200 }}
+              {{ $games := .JSON.Array "response.games" }}
+              {{ if gt (len $games) 0 }}
+                <ul class="list list-gap-5 collapsible-container" data-collapse-after="4" style="font-size: 0.9em;">
+                  {{ range $games }}
+                    <li style="display: flex; align-items: center; padding: 4px 0;">
+                      <a href="https://store.steampowered.com/app/{{ .Int "appid" }}" target="_blank" style="flex-shrink: 0; margin-right: 8px;">
+                        <img src="http://media.steampowered.com/steamcommunity/public/images/apps/{{ .Int "appid" }}/{{ .String "img_icon_url" }}.jpg" alt="{{ .String "name" }}" style="width: 32px; border-radius: 4px;">
+                      </a>
+                      <div style="flex: 1; min-width: 0;">
+                        <a href="https://store.steampowered.com/app/{{ .Int "appid" }}" class="size-h5 color-primary" target="_blank" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                          {{ .String "name" }}
                         </a>
-                        <div style="flex: 1; min-width: 0;">
-                          <a href="https://store.steampowered.com/app/{{ .Int "appid" }}" class="size-h5 color-primary" target="_blank" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            {{ .String "name" }}
-                          </a>
-                          <span class="color-subdue" style="font-size: 0.8em;">
-                            {{ if gt (toFloat (.Int "playtime_2weeks")) 60.0 }}
-                              {{ printf "%.1f hrs" (div (toFloat (.Int "playtime_2weeks")) 60.0) }}
-                            {{ else }}
-                              {{ .Int "playtime_2weeks" }}m
-                            {{ end }}
-                          </span>
-                        </div>
-                      </li>
-                    {{ end }}
-                  </ul>
-                {{ else }}
-                  <p class="color-negative">No games found.</p>
-                {{ end }}
+                        <span class="color-subdue" style="font-size: 0.8em;">
+                          {{ if gt (toFloat (.Int "playtime_2weeks")) 60.0 }}
+                            {{ printf "%.1f hrs" (div (toFloat (.Int "playtime_2weeks")) 60.0) }}
+                          {{ else }}
+                            {{ .Int "playtime_2weeks" }}m
+                          {{ end }}
+                        </span>
+                      </div>
+                    </li>
+                  {{ end }}
+                </ul>
               {{ else }}
-                <p class="color-negative">Error loading games.</p>
+                <p class="color-negative">No games found.</p>
               {{ end }}
-            </div>
+            {{ else }}
+              <p class="color-negative">Error loading games.</p>
+            {{ end }}

@@ -1,0 +1,38 @@
+services:
+  jellyfin:
+    image: linuxserver/jellyfin:10.10.7
+    container_name: jellyfin
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    
+    volumes:
+      - /DATA/AppData/jellyfin/config:/config
+      - /DATA/Media:/Media
+    
+    # Hardware acceleration (Intel/AMD)
+    devices:
+      - /dev/dri:/dev/dri
+    
+    networks:
+      - proxy
+    
+    # Optional: DLNA/Discovery ports
+    ports:
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+    
+    deploy:
+      resources:
+        reservations:
+          memory: 256M
+
+networks:
+  proxy:
+    external: true

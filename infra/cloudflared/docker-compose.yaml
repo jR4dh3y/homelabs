@@ -3,6 +3,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
+    network_mode: host # Access Traefik via localhost:80 easily
 
     env_file:
       - .env
@@ -14,32 +15,3 @@ services:
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-    networks:
-      - glance_default
-      - homelab-filemgr_filemanager-net
-      - big-bear-open-webui_default
-      - vidown_vidown-network
-      - swingmusic_default
-      - anyconverter_default
-
-networks:
-  glance_default:
-    external: true
-
-  homelab-filemgr_filemanager-net:
-    external: true
-
-  big-bear-open-webui_default:
-    external: true
-
-  vidown_vidown-network:
-    external: true
-  
-  swingmusic_default:
-    external: true
-  
-  anyconverter_default:
-    external: true
-
-

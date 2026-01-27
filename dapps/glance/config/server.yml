@@ -20,8 +20,63 @@
     # Middle Column - Main Content
     - size: full
       widgets:
+      - type: group
+        widgets:
+          - type: bookmarks
+            groups:
+              - title: Main Applications
+                links:
+                  - title: Home
+                    url: https://home.jr4.in
+                    icon: si:glance
+                  - title: Files
+                    url: https://files.jr4.in
+                    icon: mdi:folder-open
+                  - title: Traefik
+                    url: https://traefik.jr4.in/dashboard/
+                    icon: si:traefik
+                  - title: Portainer
+                    url: https://portainer.jr4.in
+                    icon: si:portainer
+                  - title: Gitea
+                    url: https://git.jr4.in
+                    icon: si:gitea
+
+              - title: Media & Downloads
+                links:
+                  - title: Jellyfin
+                    url: https://media.jr4.in
+                    icon: si:jellyfin
+                  - title: Music
+                    url: https://music.jr4.in
+                    icon: mdi:music-note
+                  - title: qBittorrent
+                    url: https://torrent.jr4.in
+                    icon: si:qbittorrent
+                  - title: ViDown
+                    url: https://dl.jr4.in
+                    icon: mdi:download
+
+              - title: Tools
+                links:
+                  - title: Chat AI
+                    url: https://chat.jr4.in
+                    icon: mdi:robot
+                  - title: Excalidraw
+                    url: https://draw.jr4.in
+                    icon: mdi:draw
+                  - title: Converter
+                    url: https://convert.jr4.in
+                    icon: mdi:swap-horizontal
+                  - title: ConvertX
+                    url: https://convertx.jr4.in
+                    icon: mdi:file-replace-outline
+                  - title: Game Streaming
+                    url: https://game.jr4.in
+                    icon: si:steam
+
       - type: docker-containers
-        title: Docker Services
+        title: System Health
         cache: 5s
         hide-by-default: false
         # show-all-containers: false
@@ -58,6 +113,11 @@
           netstat:
             name: NetStat
             parent: glance
+            icon: mdi:network
+          f1_api:
+            name: F1 API
+            icon: mdi:formula1
+            parent: glance
           vidown-frontend:
             name: Vi[D]own
             icon: mdi:download
@@ -86,12 +146,14 @@
             url: http://192.168.1.2:3000
             parent: filemanager
           cloudflared:
-            name: Cloudflare Tunnel
-            icon: mdi:cloud
-          swingmusic:
-            name: Swing Music
-            icon: mdi:music-note
-            url: http://192.168.1.2:1970
+             name: Cloudflare Tunnel
+             icon: mdi:cloud-outline
+          postgres:
+             name: PostgreSQL
+             icon: si:postgresql
+          mariadb:
+             name: MariaDB
+             icon: si:mariadb
 
       - type: split-column
         widgets:
@@ -110,10 +172,9 @@
       widgets:
         - type: weather
           location: Jammu, Jammu and Kashmir, India
-          units: metric # alternatively "imperial"
-          hour-format: 12h # alternatively "24h"
-          # Optionally hide the location from being displayed in the widget
-          # hide-location: true
+          units: metric
+          hour-format: 12h
+          cache: 30m
         - type: html
           source: |
             <pre style="font-family: monospace; line-height: 1.2; text-align: center; font-weight: bold; white-space: pre;">

@@ -1,0 +1,86 @@
+services:
+  steam-headless:
+    image: josh5/steam-headless:latest
+    container_name: steam-headless
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    # Required for GPU access and input devices
+    privileged: true
+    ipc: host
+    network_mode: host
+    
+    # ports: # Ignored in host mode
+    #   - "8083:8083" 
+    
+    environment:
+      # User/Group
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Asia/Kolkata}
+      - UMASK=${UMASK:-000}
+      
+      # Display
+      - DISPLAY=${DISPLAY:-:55}
+      - MODE=${MODE:-primary}
+      - WEB_UI_MODE=${WEB_UI_MODE:-vnc}
+      - FORCE_X11_DUMMY_CONFIG=${FORCE_X11_DUMMY_CONFIG:-true}
+      
+      # Software Rendering (Force CPU)
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - GALLIUM_DRIVER=llvmpipe
+      - MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+      
+      # Steam
+      - ENABLE_STEAM=${ENABLE_STEAM:-true}
+      - STEAM_ARGS=${STEAM_ARGS:-}
+      
+      # Sunshine (for game streaming)
+      - ENABLE_SUNSHINE=${ENABLE_SUNSHINE:-true}
+      - SUNSHINE_USER=${SUNSHINE_USER:-admin}
+      - SUNSHINE_PASS=${SUNSHINE_PASS}
+      
+      # VNC
+      - ENABLE_VNC_AUDIO=${ENABLE_VNC_AUDIO:-true}
+      - PORT_NOVNC_WEB=${PORT_NOVNC_WEB:-8083}
+      
+      # Input devices
+      - ENABLE_EVDEV_INPUTS=${ENABLE_EVDEV_INPUTS:-true}
+      
+      # Localization
+      - USER_LOCALES=${USER_LOCALES:-en_US.UTF-8 UTF-8}
+      - USER_PASSWORD=${USER_PASSWORD:-password}
+      
+      # Neko/WebRTC (for browser streaming)
+      - NEKO_NAT1TO1=${NEKO_NAT1TO1:-}
+    
+    extra_hosts:
+      - "steam-headless:127.0.0.1"
+    
+    volumes:
+      # User home directory
+      - ./data/home:/home/default
+      # Games directory
+      - /DATA/Games:/mnt/games
+      # X11 socket (for display sharing)
+      - ./data/sockets/.X11-unix:/tmp/.X11-unix
+      # PulseAudio socket
+      - ./data/sockets/pulse:/tmp/pulse
+      # Input devices for controller support
+      # - /dev/input:/dev/input:ro
+    
+    shm_size: 2G
+    
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 524288
+    
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+
+    # No networks section for host mode
