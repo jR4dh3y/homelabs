@@ -55,6 +55,14 @@ http:
     # ============================================
     # AI & TOOLS
     # ============================================
+
+    affine:
+      rule: "Host(`affine.jr4.in`)"
+      entryPoints:
+        - web
+      service: affine
+      middlewares:
+        - default-chain
     
     openwebui:
       rule: "Host(`ai.jr4.in`) || Host(`chat.jr4.in`)"
@@ -88,6 +96,14 @@ http:
     # UTILITIES
     # ============================================
     
+    gitlab:
+      rule: "Host(`gitlab.jr4.in`)"
+      entryPoints:
+        - web
+      service: gitlab
+      middlewares:
+        - default-chain
+
     vidown:
       rule: "Host(`vidown.jr4.in`) || Host(`dl.jr4.in`)"
       entryPoints:
@@ -120,6 +136,22 @@ http:
       middlewares:
         - default-chain
 
+    siyuan:
+      rule: "Host(`siyuan.jr4.in`)"
+      entryPoints:
+        - web
+      service: siyuan
+      middlewares:
+        - default-chain
+
+    vikunja:
+      rule: "Host(`vikunja.jr4.in`)"
+      entryPoints:
+        - web
+      service: vikunja
+      middlewares:
+        - default-chain
+
     # Steam Headless - noVNC web interface
     steam-novnc:
       rule: "Host(`game.jr4.in`) || Host(`steam.jr4.in`)"
@@ -134,14 +166,6 @@ http:
         - web
       service: steam-sunshine
 
-    f1api:
-      rule: "Host(`f1.jr4.in`) || Host(`f1api.jr4.in`)"
-      entryPoints:
-        - web
-      service: f1api
-      middlewares:
-        - public-chain
-
   # ============================================
   # SERVICE DEFINITIONS
   # Using host.docker.internal with host-mapped ports
@@ -151,6 +175,11 @@ http:
   services:
     # --- Containers on shared networks (use container name) ---
     
+    affine:
+      loadBalancer:
+        servers:
+          - url: "http://affine:3010"
+
     glance:
       loadBalancer:
         servers:
@@ -181,10 +210,15 @@ http:
         servers:
           - url: "http://filemanager-nginx:80"
 
-    f1api:
+    siyuan:
       loadBalancer:
         servers:
-          - url: "http://f1_api:4463"
+          - url: "http://siyuan:6806"
+
+    vikunja:
+      loadBalancer:
+        servers:
+          - url: "http://vikunja:3456"
 
     # --- Containers via host ports (until networks are aligned) ---
     
@@ -212,6 +246,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:4000"
+
+    gitlab:
+      loadBalancer:
+        servers:
+          - url: "http://gitlab:80" 
 
     excalidraw:
       loadBalancer:

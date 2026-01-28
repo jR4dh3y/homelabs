@@ -1,0 +1,71 @@
+name: affine
+
+services:
+  affine:
+    image: ghcr.io/toeverything/affine:${AFFINE_REVISION:-stable}
+    container_name: affine
+    depends_on:
+      affine-redis:
+        condition: service_healthy
+      affine-migration:
+        condition: service_completed_successfully
+    volumes:
+      - ${UPLOAD_LOCATION}:/root/.affine/storage
+      - ${CONFIG_LOCATION}:/root/.affine/config
+    env_file:
+      - .env
+    environment:
+      - REDIS_SERVER_HOST=affine-redis
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE:-affine}
+      - AFFINE_INDEXER_ENABLED=false
+    networks:
+      - proxy
+      - db_net
+      - internal
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  affine-migration:
+    image: ghcr.io/toeverything/affine:${AFFINE_REVISION:-stable}
+    container_name: affine-migration
+    volumes:
+      - ${UPLOAD_LOCATION}:/root/.affine/storage
+      - ${CONFIG_LOCATION}:/root/.affine/config
+    command: ['sh', '-c', 'node ./scripts/self-host-predeploy.js']
+    env_file:
+      - .env
+    environment:
+      - REDIS_SERVER_HOST=affine-redis
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE:-affine}
+      - AFFINE_INDEXER_ENABLED=false
+    depends_on:
+      affine-redis:
+        condition: service_healthy
+    networks:
+      - db_net
+      - internal
+    security_opt:
+      - no-new-privileges:true
+
+  affine-redis:
+    image: redis
+    container_name: affine-redis
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  proxy:
+    external: true
+  db_net:
+    external: true
+    name: databases_db_net
+  internal:

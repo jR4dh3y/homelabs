@@ -1,0 +1,57 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    restart: unless-stopped
+    hostname: 'gitlab.jr4.in'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://gitlab.jr4.in'
+        gitlab_rails['initial_root_password'] = ENV['GITLAB_ROOT_PASSWORD']
+        gitlab_rails['display_initial_root_password'] = true
+        gitlab_rails['store_initial_root_password'] = true
+        
+        # Database
+        gitlab_rails['db_adapter'] = "postgresql"
+        gitlab_rails['db_encoding'] = "unicode"
+        gitlab_rails['db_host'] = "postgres"
+        gitlab_rails['db_port'] = 5432
+        gitlab_rails['db_database'] = "gitlab"
+        gitlab_rails['db_username'] = "gitlab"
+        gitlab_rails['db_password'] = ENV['GITLAB_DB_PASSWORD']
+        
+        # SSH
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+
+        # Nginx (Behind Reverse Proxy)
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
+        
+        # Disable bundled Postgres
+        postgresql['enable'] = false
+        
+        # Optimizations
+        puma['worker_processes'] = 2
+        sidekiq['max_concurrency'] = 10
+    ports:
+      - "2224:22"
+    volumes:
+      - ./config:/etc/gitlab
+      - ./logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    networks:
+      - proxy
+    env_file:
+      - .env
+    shm_size: '256m'
+
+volumes:
+  gitlab_data:
+
+networks:
+  proxy:
+    external: true

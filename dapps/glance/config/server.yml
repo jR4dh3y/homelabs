@@ -17,64 +17,9 @@
           hour-format: 12h
         - type: calendar
           first-day-of-week: monday
-    # Middle Column - Main Content
+    # Center Column - Docker Containers & Server Stats
     - size: full
       widgets:
-      - type: group
-        widgets:
-          - type: bookmarks
-            groups:
-              - title: Main Applications
-                links:
-                  - title: Home
-                    url: https://home.jr4.in
-                    icon: si:glance
-                  - title: Files
-                    url: https://files.jr4.in
-                    icon: mdi:folder-open
-                  - title: Traefik
-                    url: https://traefik.jr4.in/dashboard/
-                    icon: si:traefik
-                  - title: Portainer
-                    url: https://portainer.jr4.in
-                    icon: si:portainer
-                  - title: Gitea
-                    url: https://git.jr4.in
-                    icon: si:gitea
-
-              - title: Media & Downloads
-                links:
-                  - title: Jellyfin
-                    url: https://media.jr4.in
-                    icon: si:jellyfin
-                  - title: Music
-                    url: https://music.jr4.in
-                    icon: mdi:music-note
-                  - title: qBittorrent
-                    url: https://torrent.jr4.in
-                    icon: si:qbittorrent
-                  - title: ViDown
-                    url: https://dl.jr4.in
-                    icon: mdi:download
-
-              - title: Tools
-                links:
-                  - title: Chat AI
-                    url: https://chat.jr4.in
-                    icon: mdi:robot
-                  - title: Excalidraw
-                    url: https://draw.jr4.in
-                    icon: mdi:draw
-                  - title: Converter
-                    url: https://convert.jr4.in
-                    icon: mdi:swap-horizontal
-                  - title: ConvertX
-                    url: https://convertx.jr4.in
-                    icon: mdi:file-replace-outline
-                  - title: Game Streaming
-                    url: https://game.jr4.in
-                    icon: si:steam
-
       - type: docker-containers
         title: System Health
         cache: 5s
@@ -84,31 +29,31 @@
           jellyfin:
             name: Jellyfin
             icon: si:jellyfin
-            url: http://192.168.1.2:8097
+            url: https://media.jr4.in
           big-bear-open-webui:
             name: Open-WebUI
             icon: mdi:robot
-            url: http://192.168.1.2:8080
+            url: https://chat.jr4.in
           convertx:
             name: ConvertX
             icon: mdi:file-replace-outline
-            url: http://192.168.1.2:3333
+            url: https://convertx.jr4.in
           portainer:
             name: Portainer
             icon: si:portainer
-            url: http://192.168.1.2:9000
+            url: https://portainer.jr4.in
           qbittorrent:
             name: qBittorrent
             icon: si:qbittorrent
-            url: http://192.168.1.2:8181
+            url: https://qbit.jr4.in
           steam-headless:
             name: Steam-Headless
             icon: si:steam
-            url: http://192.168.1.2:8083
+            url: https://game.jr4.in
           glance:
             name: Glance
             icon: si:glance
-            url: http://192.168.1.2:8002
+            url: https://home.jr4.in
             id: glance
           netstat:
             name: NetStat
@@ -121,7 +66,7 @@
           vidown-frontend:
             name: Vi[D]own
             icon: mdi:download
-            url: http://192.168.1.2:3050
+            url: https://dl.jr4.in
             id: vidown
           vidown-backend:
             name: Backend
@@ -129,21 +74,19 @@
           anyconv:
             name: AnyConv
             icon: mdi:swap-horizontal
-            url: http://192.168.1.2:3000
+            url: https://convert.jr4.in
           filemanager-backend:
             name: Backend
             icon: mdi:folder
-            url: http://192.168.1.2:8067
             parent: filemanager
           filemanager-frontend:
             name: FileManager
             icon: mdi:folder-open
-            url: http://192.168.1.2:3067
+            url: https://filemanager.jr4.in
             id: filemanager
           filemanager-nginx:
             name: Nginx
             icon: mdi:server
-            url: http://192.168.1.2:3000
             parent: filemanager
           cloudflared:
              name: Cloudflare Tunnel
@@ -154,7 +97,36 @@
           mariadb:
              name: MariaDB
              icon: si:mariadb
-
+          traefik:
+             name: Traefik
+             icon: si:ngenx
+             url: https://traefik.jr4.in/dashboard/
+          gitea:
+             name: Gitea
+             icon: si:gitea
+             url: https://git.jr4.in
+             id: gitea
+          gitea-runner:
+             name: Runner
+             icon: si:circleci
+             parent: gitea
+          gitlab:
+             name: GitLab
+             icon: si:gitlab
+             url: https://gitlab.jr4.in
+             id: gitlab
+          gitlab-runner:
+             name: Runner
+             icon: si:circleci
+             parent: gitlab
+          excalidraw:
+             name: Excalidraw
+             icon: mdi:pencil-ruler
+             url: https://draw.jr4.in
+          swingmusic:
+             name: SwingMusic
+             icon: mdi:music-note
+             url: https://music.jr4.in
       - type: split-column
         widgets:
           - type: server-stats

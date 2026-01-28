@@ -19,7 +19,7 @@ services:
       - proxy
 
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: postgres
     restart: unless-stopped
     env_file:

@@ -2,82 +2,214 @@
 
 ## 1. Project Overview & Philosophy
 This repository serves as the **"Single Source of Truth"** for a homelab server setup. It replaces tools like CasaOS with a Git-managed, Docker-based infrastructure.
-- **Goal**: Full system restoration from this repo + one script.
+- **Goal**: Full system restoration from this repo + one script (`install.sh`).
 - **Scope**: Docker orchestration, network configuration (Traefik), and system setup.
 - **Exclusions**: Source code of custom apps (treated as black boxes/images), heavy data (media), and secrets (`.env`).
 
 ## 2. Directory Structure
-- **dapps/**: Decentralized/Dockerized Applications. One folder per service (e.g., `dapps/jellyfin/`).
-- **infra/**: Core infrastructure services (Traefik, Portainer, Databases).
-- **devops/**: Maintenance and CI/CD tools.
-- **install.sh**: The bootstrap script for setting up a fresh server.
+```
+server/
+├── dapps/           # Decentralized/Dockerized Applications (one folder per service)
+│   ├── vidown/      # Video downloader (SvelteKit + Python)
+│   ├── anyconverter/# File converter (SvelteKit)
+│   ├── glance/      # Dashboard with custom APIs
+│   ├── jellyfin/    # Media server
+│   └── ...
+├── infra/           # Core infrastructure services
+│   ├── traefik/     # Reverse proxy (routes all traffic)
+│   ├── cloudflared/ # Cloudflare tunnel for external access
+│   ├── databases/   # Shared MariaDB & PostgreSQL
+│   └── portainer/   # Docker UI management
+├── devops/          # CI/CD and maintenance tools
+│   ├── gitea/       # Self-hosted Git
+│   ├── gitea-runner/# CI runner
+│   └── renovate/    # Dependency updates
+└── install.sh       # Bootstrap script for fresh servers
+```
 
-## 3. Docker Compose Standards
+## 3. Build, Lint & Verification Commands
+
+### Docker Compose Validation
+```bash
+# Lint/validate compose file syntax (run from service directory)
+docker compose config
+
+# Validate with specific file
+docker compose -f dapps/<app>/docker-compose.yml config
+```
+
+### Deployment Commands
+```bash
+# Deploy a single service
+docker compose -f dapps/<app>/docker-compose.yml up -d
+
+# Rebuild after code changes
+docker compose -f dapps/<app>/docker-compose.yml up -d --build
+
+# View logs
+docker compose -f dapps/<app>/docker-compose.yml logs -f
+
+# Stop service
+docker compose -f dapps/<app>/docker-compose.yml down
+```
+
+### System Verification
+```bash
+# Check for port conflicts
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+
+# Verify Traefik routing
+curl -I http://<service>.jr4.in
+
+# Check container health
+docker inspect --format='{{.State.Health.Status}}' <container_name>
+
+# Test network connectivity between containers
+docker exec traefik ping <container_name>
+```
+
+### Traefik Updates (Required when adding new networks)
+```bash
+docker compose -f infra/traefik/docker-compose.yml up -d
+```
+
+## 4. Docker Compose Standards
 *All services must use `docker-compose.yml` (or `.yaml`).*
 
 ### Service Definition
 - **Isolation**: Each service gets its own directory (e.g., `dapps/new-service/`).
-- **Container Name**: ALWAYS specify `container_name: <service_name>` for predictable DNS resolution.
+- **Container Name**: ALWAYS specify `container_name: <service_name>` for DNS resolution.
 - **Restart Policy**: `restart: unless-stopped` is standard.
 - **Secrets**: Use `env_file: .env`. NEVER commit credentials to git.
+- **Healthchecks**: Include healthchecks for critical services (see examples in vidown, anyconverter).
 
-### Networking (The "Hybrid" Strategy)
-Traefik is the reverse proxy. Services are exposed in one of two ways:
+### Networking Strategy
+Traefik is the reverse proxy. All web apps join the `proxy` network.
 
-**Method A: Dedicated Network (Preferred for new web apps)**
-1. **App Config**: Define a named network in the app's `docker-compose.yml`.
-   ```yaml
-   networks:
-     my-app-net:
-       name: my-app-net
-       driver: bridge
-   ```
-2. **Traefik Config**:
-   - Update `infra/traefik/docker-compose.yaml`: Add `my-app-net` to the `traefik` container's networks and the top-level `networks` (as `external: true`).
-   - Update `infra/traefik/config/dynamic/services.yaml`: Add the router and service definition, pointing to `http://container_name:port`.
+**Method A: Proxy Network (Preferred)**
+```yaml
+services:
+  myapp:
+    container_name: myapp
+    networks:
+      - proxy
 
-**Method B: Host Networking (Legacy/Specific Use Cases)**
-1. **App Config**: Map ports to the host (`ports: "8080:80"`).
-2. **Traefik Config**:
-   - Update `infra/traefik/config/dynamic/services.yaml`: Point the service URL to `http://host.docker.internal:8080`.
+networks:
+  proxy:
+    external: true
+```
+
+**Method B: Host Ports (Legacy)**
+```yaml
+ports:
+  - "8080:80"  # Then reference via host.docker.internal:8080 in Traefik
+```
+
+### Traefik Service Registration
+1. Add router in `infra/traefik/config/dynamic/services.yaml`:
+```yaml
+http:
+  routers:
+    myapp:
+      rule: "Host(`myapp.jr4.in`)"
+      entryPoints:
+        - web
+      service: myapp
+      middlewares:
+        - default-chain
+
+  services:
+    myapp:
+      loadBalancer:
+        servers:
+          - url: "http://myapp-container:3000"
+```
 
 ### Storage & Volumes
-- **Config**: Use bind mounts relative to the compose file for configuration.
-  - Example: `- ./config:/config`
-- **Data**: Use absolute paths for heavy data (Media, Downloads).
-  - Convention: `/DATA/...` (or check existing mounts in `SERVER_SETUP_GUIDE.md`).
-- **Permissions**: Be mindful of PID/GID. `user: "1000:1000"` is often safe for this setup.
+- **Config**: Bind mounts relative to compose file: `- ./config:/config`
+- **Data**: Absolute paths for heavy data: `/DATA/...`
+- **Permissions**: Use `user: "1000:1000"` when needed.
 
-## 4. Deployment & Verification Commands
+## 5. Code Style & Conventions
 
-### Verification
-- **Lint Config**: Check syntax before applying.
-  ```bash
-  docker compose config
-  ```
-- **Check Conflicts**: Ensure exposed ports don't clash with existing services.
-  ```bash
-  docker ps --format "table {{.Names}}\t{{.Ports}}"
-  ```
+### YAML Formatting
+- Use 2-space indentation
+- Quote string values containing special characters
+- Use lowercase for keys
+- Group related services with comment headers
 
-### Deployment
-- **Deploy App**:
-  ```bash
-  docker compose -f dapps/<app>/docker-compose.yml up -d
-  ```
-- **Update Traefik** (Required if adding a new network):
-  ```bash
-  docker compose -f infra/traefik/docker-compose.yml up -d
-  ```
+### Environment Variables
+- Create `.env.example` with documented placeholders for any service requiring secrets
+- Use descriptive variable names with service prefix: `GITEA_DB_HOST`, `FM_RATE_LIMIT_RPS`
+- Never commit `.env` files (already in `.gitignore`)
 
-## 5. Adding a New Service Checklist
-1. [ ] Create `dapps/<service>/docker-compose.yml`.
-2. [ ] configure `container_name` and volumes.
-3. [ ] Define network (Method A) or Ports (Method B).
-4. [ ] Create `.env.example` if variables are needed.
-5. [ ] Register service in `infra/traefik/config/dynamic/services.yaml`.
-6. [ ] (Method A only) Register network in `infra/traefik/docker-compose.yaml`.
-7. [ ] Test with `docker compose up -d`.
+### Naming Conventions
+- **Directories**: lowercase, hyphenated (`homelab-filemgr`)
+- **Container names**: lowercase, hyphenated, match directory name
+- **Networks**: lowercase, descriptive (`proxy`, `db_net`)
+- **Volumes**: lowercase with underscores (`gitea_data`, `postgres_data`)
+
+### Security Practices
+- Add `security_opt: - no-new-privileges:true` to all containers
+- Use read-only mounts where possible: `- ./config:/config:ro`
+- Set resource limits on production services
+- Prefer `expose` over `ports` for internal-only services
+
+## 6. Adding a New Service Checklist
+1. [ ] Create `<(dapps/devops/infra)>/<service>/docker-compose.yml`
+2. [ ] Set `container_name` matching directory name
+3. [ ] Add `restart: unless-stopped`
+4. [ ] Join `proxy` network (external: true)
+5. [ ] Add healthcheck if service supports it
+6. [ ] Create `.env.example` if secrets are needed
+7. [ ] Register router and service in `infra/traefik/config/dynamic/services.yaml`
+8. [ ] Validate with `docker compose config`
+9. [ ] Test with `docker compose up -d`
+10. [ ] Verify routing: `curl -I http://<service>.jr4.in`
+
+## 7. Common Patterns
+
+### Multi-Container Service (Frontend + Backend)
+See `dapps/vidown/` or `dapps/homelab-filemgr/` for examples with:
+- Frontend (SvelteKit/Node)
+- Backend (Python/Go)
+- Shared network
+- Health-dependent startup
+
+### Service with Custom Build Context
+```yaml
+services:
+  app:
+    build:
+      context: ./subfolder
+      dockerfile: Dockerfile
+    container_name: myapp
+```
+
+### Database-Dependent Service
+Reference shared databases in `infra/databases/`:
+- PostgreSQL: `postgres:5432`
+- MariaDB: `mariadb:3306`
+
+## 8. Troubleshooting
+
+### Container won't start
+```bash
+docker compose logs <service>
+docker inspect <container> | grep -A 10 State
+```
+
+### Network issues
+```bash
+docker network ls
+docker network inspect proxy
+```
+
+### Traefik not routing
+1. Check container is on `proxy` network
+2. Verify `services.yaml` syntax
+3. Check Traefik logs: `docker logs traefik`
+4. Confirm DNS resolves to server
 
 ---
-*Generated by Antigravity on Mon Jan 26 2026*
+*Maintained for AI agents operating in this repository*

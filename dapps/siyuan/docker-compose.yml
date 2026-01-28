@@ -1,0 +1,27 @@
+services:
+  siyuan:
+    container_name: siyuan
+    image: b3log/siyuan
+    command: ['--workspace=/siyuan/workspace/', '--accessAuthCode=${SIYUAN_ACCESS_AUTH_CODE}']
+    restart: unless-stopped
+    ports:
+      - 6806:6806
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:6806/appearance/boot/icon.png"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+    volumes:
+      - ./workspace:/siyuan/workspace
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    env_file:
+      - .env
+
+networks:
+  proxy:
+    external: true

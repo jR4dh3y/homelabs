@@ -1,5 +1,12 @@
 # Swingmusic configuration and data
-dapps/swingmusic/config/
+*/swingmusic/config/
 .env
-dapps/steam-headless/data
-dapps/convertx/data
+.env_temp
+*/steam-headless/data
+*/convertx/data
+*/siyuan/workspace/
+*/vikunja/files/
+*/gitlab/logs/
+*/gitlab/config/
+*/gitlab-runner/config/
+*/affine/config

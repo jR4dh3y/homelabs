@@ -1,0 +1,25 @@
+services:
+  vikunja:
+    image: vikunja/vikunja
+    container_name: vikunja
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: https://vikunja.jr4.in/
+      VIKUNJA_DATABASE_HOST: postgres
+      VIKUNJA_DATABASE_PASSWORD: ${VIKUNJA_DB_PASSWORD}
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_USER: vikunja
+      VIKUNJA_DATABASE_DATABASE: vikunja
+      VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_JWT_SECRET}
+    volumes:
+      - ./files:/app/vikunja/files
+    networks:
+      - proxy
+      - db_net
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
+  db_net:
+    external: true
+    name: databases_db_net
