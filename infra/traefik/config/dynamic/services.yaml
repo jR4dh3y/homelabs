@@ -198,7 +198,7 @@ http:
     vidown:
       loadBalancer:
         servers:
-          - url: "http://vidown-frontend:3000"
+          - url: "http://vidown:3000"
 
     anyconverter:
       loadBalancer:
