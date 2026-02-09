@@ -21,7 +21,7 @@
     - size: full
       widgets:
       - type: docker-containers
-        title: System Health
+        title: Active Containers
         cache: 5s
         hide-by-default: false
         # show-all-containers: false
@@ -99,7 +99,7 @@
              icon: si:mariadb
           traefik:
              name: Traefik
-             icon: si:ngenx
+             icon: si:traefikproxy
              url: https://traefik.jr4.in/dashboard/
           gitea:
              name: Gitea
@@ -127,6 +127,10 @@
              name: SwingMusic
              icon: mdi:music-note
              url: https://music.jr4.in
+          siyuan:
+              name: SiYuan
+              icon: mdi:notebook
+              url: https://siyuan.jr4.in
       - type: split-column
         widgets:
           - type: server-stats

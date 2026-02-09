@@ -1,73 +1,109 @@
 # Homelab Server
 
-A comprehensive Docker-based homelab setup with multiple decentralized applications (dApps), services, and infrastructure components.
+Single Source of Truth for a Docker-based homelab. This repository tracks infrastructure, applications, and operational docs to restore the server from scratch.
 
-## 📁 Project Structure
+## Documentation
 
-### dApps
-Production-grade applications running on the homelab:
+- **[Repository Guidelines](AGENTS.md)**
+- **[Work Queue](TODO.md)**
+- **Service READMEs**: Many services include their own `README.md` inside the service folder.
 
-- **[anyconverter](dapps/anyconverter/)** - SvelteKit-based file conversion utility
-- **[excalidraw](dapps/excalidraw/)** - Collaborative whiteboarding application
-- **[glance](dapps/glance/)** - Dashboard and monitoring service with custom API support
-- **[homelab-filemgr](dapps/homelab-filemgr/)** - Full-stack file manager with Go backend and Svelte frontend
-- **[swingmusic](dapps/swingmusic/)** - Music streaming application
-- **[vidown](dapps/vidown/)** - Video downloader with Python backend and SvelteKit frontend
+## Directory Layout
 
-### DevOps & Infrastructure
-Backend infrastructure and container orchestration:
+- **`infra/`**: Core infrastructure (Traefik, databases, Portainer, Cloudflared).
+- **`dapps/`**: User-facing applications (Jellyfin, Glance, Vidown, etc.).
+- **`devops/`**: Development tools (Gitea, runners, Renovate, GitLab).
 
-- **[devops/](devops/)** - Container orchestration and CI/CD configurations
-  - `gitea/` - Self-hosted Git service
-  - `gitea-runner/` - Gitea CI/CD runner
-  - `gitlab/` - GitLab instance (optional)
-  - `renovate/` - Automated dependency updates
+## Quick Start
 
-- **[infra/](infra/)** - Infrastructure services
-  - `cloudflared/` - Cloudflare tunnel for secure access
-  - `databases/` - Database configurations
-  - `portainer/` - Docker UI management
-  - `traefik/` - Reverse proxy and load balancer
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Docker & Docker Compose
-- Linux-based environment
-- Minimum 2GB RAM for core services
-- Open ports for services (configurable via Traefik)
-
-### Quick Start
-
-1. **Clone and navigate to the project:**
+1. **Bootstrap a fresh server** with `install.sh` (see `AGENTS.md` for repo standards).
+2. **Create `.env` files** for services that require secrets (copy from `.env.example` if present).
+3. **Start core infrastructure** (Traefik first):
    ```bash
-   cd /home/pico/server
+   docker compose -f infra/traefik/docker-compose.yml up -d
+   ```
+4. **Start a service** (example: Jellyfin):
+   ```bash
+   docker compose -f dapps/jellyfin/docker-compose.yml up -d
    ```
 
-2. **Review configurations:**
-   - Check [TODO.md](TODO.md) for current tasks
-   - Review individual service READMEs in each dApp folder
+## Services Index
 
-3. **Deploy services:**
-   ```bash
-   # Start all services with Docker Compose
-   docker-compose up -d
-   
-   # Or start individual services
-   cd dapps/homelab-filemgr && docker-compose up -d
-   ```
+### Infrastructure
 
-## 📋 Key Services
+- **[Traefik](infra/traefik/)**: Reverse proxy and edge router.
+- **[Cloudflared](infra/cloudflared/)**: Secure remote access tunnel.
+- **[Portainer](infra/portainer/)**: Container management UI.
+- **[Databases](infra/databases/)**: Shared MariaDB & Postgres.
 
-| Service | Type | Purpose |
-|---------|------|---------|
-| File Manager | Full-stack | File browsing & management |
-| Glance | Dashboard | System monitoring & info display |
-| Any Converter | Utility | File format conversion |
-| Music | Streaming | Audio library management |
-| Whiteboard | Collaboration | Excalidraw diagrams |
-| Video Download | Utility | Media downloading |
-| Traefik | Reverse Proxy | Routing & SSL termination |
-| Portainer | Management | Docker container UI |
-| Cloudflared | Networking | Secure external access |
+### DApps
+
+- **[AnyConverter](dapps/anyconverter/)**
+- **[ConvertX](dapps/convertx/)**
+- **[Excalidraw](dapps/excalidraw/)**
+- **[Glance](dapps/glance/)**
+- **[Homelab FileManager](dapps/homelab-filemgr/)**
+- **[Jellyfin](dapps/jellyfin/)**
+- **[OpenWebUI](dapps/openwebui/)**
+- **[QBittorrent](dapps/qbittorrent/)**
+- **[Steam Headless](dapps/steam-headless/)**
+- **[SwingMusic](dapps/swingmusic/)**
+- **[Vidown](dapps/vidown/)**
+
+### DevOps & Tools
+
+- **[Gitea](devops/gitea/)**
+- **[Gitea Runner](devops/gitea-runner/)**
+- **[GitLab](devops/gitlab/)**
+- **[GitLab Runner](devops/gitlab-runner/)**
+- **[Renovate](devops/renovate/)**
+
+### Archived / Inactive
+
+- **[Affine](archive/affine/)**
+- **[Siyuan](archive/siyuan/)**
+- **[Vikunja](archive/vikunja/)**
+
+## Operations Cheatsheet
+
+Start a service:
+```bash
+docker compose -f dapps/<service>/docker-compose.yml up -d
+```
+
+Stop a service:
+```bash
+docker compose -f dapps/<service>/docker-compose.yml down
+```
+
+Follow logs:
+```bash
+docker compose -f dapps/<service>/docker-compose.yml logs -f
+```
+
+Update a service:
+```bash
+docker compose -f dapps/<service>/docker-compose.yml pull
+docker compose -f dapps/<service>/docker-compose.yml up -d
+```
+
+Validate a compose file:
+```bash
+docker compose -f dapps/<service>/docker-compose.yml config
+```
+
+## Data & Backups
+
+Back up critical locations as defined in service compose files:
+
+- **`/DATA/AppData`**: Application configs and state.
+- **`/DATA/Media`**: Media library.
+- **Volumes**: `mariadb_data`, `postgres_data`, `gitea_data`.
+
+## Conventions
+
+- Each service has its own `docker-compose.yml`.
+- Use `env_file: .env` for secrets and never commit `.env` files.
+- Register new web apps in `infra/traefik/config/dynamic/services.yaml`.
+- Standard practices and checklists live in `AGENTS.md`.
 
