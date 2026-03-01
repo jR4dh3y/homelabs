@@ -54,13 +54,15 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 
 - **[Gitea](devops/gitea/)**
 - **[Gitea Runner](devops/gitea-runner/)**
-- **[GitLab](devops/gitlab/)**
 - **[GitLab Runner](devops/gitlab-runner/)**
 - **[Renovate](devops/renovate/)**
 
 ### Archived / Inactive
 
 - **[Affine](archive/affine/)**
+- **[Continuwuity](archive/continuwuity/)**: Matrix homeserver.
+- **[Coturn](archive/coturn/)**: TURN relay for Matrix VoIP.
+- **[GitLab](archive/gitlab/)**
 - **[Siyuan](archive/siyuan/)**
 - **[Vikunja](archive/vikunja/)**
 
@@ -106,4 +108,3 @@ Back up critical locations as defined in service compose files:
 - Use `env_file: .env` for secrets and never commit `.env` files.
 - Register new web apps in `infra/traefik/config/dynamic/services.yaml`.
 - Standard practices and checklists live in `AGENTS.md`.
-

@@ -1,0 +1,27 @@
+services:
+  coturn:
+    image: coturn/coturn:latest
+    container_name: coturn
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    network_mode: host
+
+    command:
+      - -n
+      - --log-file=stdout
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SHARED_SECRET}
+      - --realm=${TURN_REALM}
+      - --external-ip=${TURN_EXTERNAL_IP}
+      - --listening-port=${TURN_LISTEN_PORT:-3478}
+      - --min-port=${TURN_MIN_PORT:-49152}
+      - --max-port=${TURN_MAX_PORT:-49200}
+      - --fingerprint
+      - --no-cli
+      - --no-multicast-peers
+
+    security_opt:
+      - no-new-privileges:true

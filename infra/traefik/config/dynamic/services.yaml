@@ -95,14 +95,6 @@ http:
     # ============================================
     # UTILITIES
     # ============================================
-    
-    gitlab:
-      rule: "Host(`gitlab.jr4.in`)"
-      entryPoints:
-        - web
-      service: gitlab
-      middlewares:
-        - default-chain
 
     vidown:
       rule: "Host(`dl.jr4.in`)"
@@ -246,11 +238,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:4000"
-
-    gitlab:
-      loadBalancer:
-        servers:
-          - url: "http://gitlab:80" 
 
     excalidraw:
       loadBalancer:

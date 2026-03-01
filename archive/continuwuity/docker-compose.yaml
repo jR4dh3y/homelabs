@@ -1,0 +1,33 @@
+services:
+  continuwuity:
+    image: docker.io/jadedblueeyes/continuwuity:latest
+    container_name: continuwuity
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      - CONTINUWUITY_SERVER_NAME=${CONTINUWUITY_SERVER_NAME}
+      - CONTINUWUITY_ADDRESS=0.0.0.0
+      - CONTINUWUITY_PORT=6167
+      - CONTINUWUITY_DATABASE_PATH=/var/lib/continuwuity
+      - CONTINUWUITY_ALLOW_REGISTRATION=${CONTINUWUITY_ALLOW_REGISTRATION:-false}
+      - CONTINUWUITY_REGISTRATION_TOKEN=${CONTINUWUITY_REGISTRATION_TOKEN}
+      - CONTINUWUITY_ALLOW_FEDERATION=${CONTINUWUITY_ALLOW_FEDERATION:-false}
+      - CONTINUWUITY_MAX_REQUEST_SIZE=${CONTINUWUITY_MAX_REQUEST_SIZE:-209715200}
+      - CONTINUWUITY_TURN_URIS=${CONTINUWUITY_TURN_URIS}
+      - CONTINUWUITY_TURN_SECRET=${CONTINUWUITY_TURN_SECRET}
+
+    volumes:
+      - /DATA/AppData/continuwuity:/var/lib/continuwuity
+
+    security_opt:
+      - no-new-privileges:true
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
