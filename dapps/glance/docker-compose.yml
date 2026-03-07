@@ -33,10 +33,15 @@ services:
     container_name: f1_api
     image: skyallinott/f1_api:latest
     restart: unless-stopped
+    volumes:
+      - ./f1-api-overrides/API_Endpoints/drivers_cleaner.py:/app/API_Endpoints/drivers_cleaner.py:ro
+      - ./f1-api-overrides/API_Endpoints/constructors_cleaner.py:/app/API_Endpoints/constructors_cleaner.py:ro
+      - ./f1-api-overrides/API_Endpoints/current_race_cleaner.py:/app/API_Endpoints/current_race_cleaner.py:ro
     environment:
-      - TIMEZONE=UTC
+      - TIMEZONE=Asia/Kolkata
       - TRACK_COLOUR=#e5d486
-      - EVENT_DETAIL=main
+      - EVENT_DETAIL=detailed
+      - F1_SEASON=auto
     networks:
       - proxy
 

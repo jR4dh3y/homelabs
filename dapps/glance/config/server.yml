@@ -63,31 +63,18 @@
             name: F1 API
             icon: mdi:formula1
             parent: glance
-          vidown-frontend:
+          vidown:
             name: Vi[D]own
             icon: mdi:download
             url: https://dl.jr4.in
-            id: vidown
-          vidown-backend:
-            name: Backend
-            parent: vidown
           anyconv:
             name: AnyConv
             icon: mdi:swap-horizontal
             url: https://convert.jr4.in
-          filemanager-backend:
-            name: Backend
-            icon: mdi:folder
-            parent: filemanager
-          filemanager-frontend:
+          filemanager:
             name: FileManager
             icon: mdi:folder-open
-            url: https://filemanager.jr4.in
-            id: filemanager
-          filemanager-nginx:
-            name: Nginx
-            icon: mdi:server
-            parent: filemanager
+            url: https://files.jr4.in
           cloudflared:
              name: Cloudflare Tunnel
              icon: mdi:cloud-outline

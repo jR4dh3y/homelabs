@@ -9,4 +9,19 @@
 */gitlab/logs/
 */gitlab/config/
 */gitlab-runner/config/
+# Swingmusic configuration and data
+*/swingmusic/config/
+.env
+.env_temp
+*/steam-headless/data
+*/convertx/data
+*/siyuan/workspace/
+*/vikunja/files/
+*/gitlab/logs/
+*/gitlab/config/
+*/gitlab-runner/config/
 */affine/config
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

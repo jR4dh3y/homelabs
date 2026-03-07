@@ -3,78 +3,132 @@
     - size: small
       widgets:
         - type: custom-api
-          title: Drivers Championship
-          cache: 1h
-          url: http://f1_api:4463/f1/drivers_standings/
-          template: | # html
-            <ul class="list list-gap-3 collapsible-container" data-collapse-after="10" style="font-size: 0.85em;">
-              {{ $drivers := .JSON.Array "drivers" }}
-              {{ if gt (len $drivers) 0 }}
-                {{ range $drivers }}
-                  <li class="flex gap-3 items-center" style="padding: 6px 0;">
-                    <div style="flex-shrink: 0; width: 20px; text-align: center; font-weight: bold; color: var(--color-primary); font-size: 0.9em;">{{ .Int "position" }}</div>
-                    <div style="width: 18px; flex-shrink: 0;">
-                      {{ if ne (.String "flag") "" }}<img src="https://flagcdn.com/24x18/{{ .String "flag" }}.png" alt="{{ .String "country" }}" style="width: 100%; border-radius: 2px;">{{ end }}
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                      <a href="https://www.formula1.com" target="_blank" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 0.9em;">{{ .String "surname" }}</a>
-                    </div>
-                    <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary); min-width: 30px; text-align: right; font-size: 0.9em;">{{ .Int "points" }}</div>
-                  </li>
-                {{ end }}
-              {{ else }}
-                <p class="color-negative">No drivers data found.</p>
-              {{ end }}
-            </ul>
-
-        - type: custom-api
-          title: Constructors Championship
-          cache: 1h
-          url: http://f1_api:4463/f1/constructors_standings/
-          template: | # html
-            <ul class="list list-gap-3 collapsible-container" data-collapse-after="10" style="font-size: 0.85em;">
-              {{ $constructors := .JSON.Array "constructors" }}
-              {{ if gt (len $constructors) 0 }}
-                {{ range $constructors }}
-                  <li class="flex gap-3 items-center" style="padding: 6px 0;">
-                    <div style="flex-shrink: 0; width: 20px; text-align: center; font-weight: bold; color: var(--color-primary); font-size: 0.9em;">{{ .Int "position" }}</div>
-                    <div style="width: 18px; flex-shrink: 0;">
-                      {{ if ne (.String "flag") "" }}<img src="https://flagcdn.com/24x18/{{ .String "flag" }}.png" alt="{{ .String "country" }}" style="width: 100%; border-radius: 2px;">{{ end }}
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                      <a href="https://www.formula1.com" target="_blank" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 0.9em;">{{ .String "team" }}</a>
-                    </div>
-                    <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary); min-width: 30px; text-align: right; font-size: 0.9em;">{{ .Int "points" }}</div>
-                  </li>
-                {{ end }}
-              {{ else }}
-                <p class="color-negative">No constructors data found.</p>
-              {{ end }}
-            </ul>
-
-    - size: full
-      widgets:
-        - type: custom-api
-          title: Next Race
-          cache: 1h
+          title: Circuit Weather
+          cache: 30m
+          timeout: 20s
           url: http://f1_api:4463/f1/next_race/
           template: | # html
             {{ $races := .JSON.Array "race" }}
             {{ if gt (len $races) 0 }}
               {{ $race := index $races 0 }}
-              {{ $nextEvent := .JSON "next_event" }}
-              {{ $circuit := $race.Object "circuit" }}
+              {{ $city := .JSON.String "circuit_weather.location.city" }}
+              {{ $country := .JSON.String "circuit_weather.location.country" }}
+              {{ if .JSON.Exists "circuit_weather.current.temperature_2m" }}
+                <div style="padding: 8px 0;">
+                  <p class="size-h3 color-primary" style="margin: 0 0 10px 0; text-align: center;">{{ $city }}, {{ $country }}</p>
+                  <div style="background: var(--color-widget-background-highlight); padding: 10px; border-radius: 4px;">
+                    <div class="flex justify-between" style="font-size: 0.9em; margin-bottom: 6px;">
+                      <span class="color-subdue">Temperature</span>
+                      <span class="color-primary" style="font-weight: bold;">{{ .JSON.Float "circuit_weather.current.temperature_2m" | printf "%.1f" }}°C</span>
+                    </div>
+                    <div class="flex justify-between" style="font-size: 0.9em; margin-bottom: 6px;">
+                      <span class="color-subdue">Feels Like</span>
+                      <span>{{ .JSON.Float "circuit_weather.current.apparent_temperature" | printf "%.1f" }}°C</span>
+                    </div>
+                    <div class="flex justify-between" style="font-size: 0.9em; margin-bottom: 6px;">
+                      <span class="color-subdue">Humidity</span>
+                      <span>{{ .JSON.Int "circuit_weather.current.relative_humidity_2m" }}%</span>
+                    </div>
+                    <div class="flex justify-between" style="font-size: 0.9em; margin-bottom: 6px;">
+                      <span class="color-subdue">Wind</span>
+                      <span>{{ .JSON.Float "circuit_weather.current.wind_speed_10m" | printf "%.0f" }} km/h</span>
+                    </div>
+                    <div class="flex justify-between" style="font-size: 0.9em; margin-bottom: 6px;">
+                      <span class="color-subdue">Rain Chance</span>
+                      <span>{{ .JSON.Int "circuit_weather.daily.precipitation_probability_max" }}%</span>
+                    </div>
+                    <div class="flex justify-between" style="font-size: 0.9em;">
+                      <span class="color-subdue">Today (Min/Max)</span>
+                      <span>{{ .JSON.Float "circuit_weather.daily.temperature_2m_min" | printf "%.0f" }}° / {{ .JSON.Float "circuit_weather.daily.temperature_2m_max" | printf "%.0f" }}°C</span>
+                    </div>
+                  </div>
+                </div>
+              {{ else }}
+                <div style="padding: 8px 0;">
+                  <p class="size-h3 color-primary" style="margin: 0 0 10px 0; text-align: center;">{{ $race.String "circuit.city" }}, {{ $race.String "circuit.country" }}</p>
+                  <p class="color-negative">Weather data unavailable right now.</p>
+                </div>
+              {{ end }}
+            {{ else }}
+              <p class="color-negative">No race data available</p>
+            {{ end }}
+
+        - type: group
+          widgets:
+            - type: custom-api
+              title: Drivers
+              cache: 1h
+              timeout: 20s
+              url: http://f1_api:4463/f1/drivers_standings/
+              template: | # html
+                <ul class="list list-gap-3 collapsible-container" data-collapse-after="10" style="font-size: 0.85em;">
+                  {{ $drivers := .JSON.Array "drivers" }}
+                  {{ if gt (len $drivers) 0 }}
+                    {{ range $drivers }}
+                      <li class="flex gap-3 items-center" style="padding: 6px 0;">
+                        <div style="flex-shrink: 0; width: 20px; text-align: center; font-weight: bold; color: var(--color-primary); font-size: 0.9em;">{{ .Int "position" }}</div>
+                        <div style="width: 18px; flex-shrink: 0;">
+                          {{ if ne (.String "flag") "" }}<img src="https://flagcdn.com/24x18/{{ .String "flag" }}.png" alt="{{ .String "country" }}" style="width: 100%; border-radius: 2px;">{{ end }}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                          <a href="https://www.formula1.com" target="_blank" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 0.9em;">{{ .String "surname" }}</a>
+                        </div>
+                        <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary); min-width: 30px; text-align: right; font-size: 0.9em;">{{ .Int "points" }}</div>
+                      </li>
+                    {{ end }}
+                  {{ else }}
+                    <p class="color-negative">No drivers data found.</p>
+                  {{ end }}
+                </ul>
+
+            - type: custom-api
+              title: Constructors
+              cache: 1h
+              timeout: 20s
+              url: http://f1_api:4463/f1/constructors_standings/
+              template: | # html
+                <ul class="list list-gap-3 collapsible-container" data-collapse-after="11" style="font-size: 0.85em;">
+                  {{ $constructors := .JSON.Array "constructors" }}
+                  {{ if gt (len $constructors) 0 }}
+                    {{ range $constructors }}
+                      {{ if le (.Int "position") 11 }}
+                        <li class="flex gap-3 items-center" style="padding: 6px 0;">
+                          <div style="flex-shrink: 0; width: 20px; text-align: center; font-weight: bold; color: var(--color-primary); font-size: 0.9em;">{{ .Int "position" }}</div>
+                          <div style="width: 18px; flex-shrink: 0;">
+                            {{ if ne (.String "flag") "" }}<img src="https://flagcdn.com/24x18/{{ .String "flag" }}.png" alt="{{ .String "country" }}" style="width: 100%; border-radius: 2px;">{{ end }}
+                          </div>
+                          <div style="flex: 1; min-width: 0;">
+                            <a href="https://www.formula1.com" target="_blank" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 0.9em;">{{ .String "team" }}</a>
+                          </div>
+                          <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary); min-width: 30px; text-align: right; font-size: 0.9em;">{{ .Int "points" }}</div>
+                        </li>
+                      {{ end }}
+                    {{ end }}
+                  {{ else }}
+                    <p class="color-negative">No constructors data found.</p>
+                  {{ end }}
+                </ul>
+
+
+    - size: full
+      widgets:
+        - type: custom-api
+          title: Track Info
+          cache: 1h
+          timeout: 20s
+          url: http://f1_api:4463/f1/next_race/
+          template: | # html
+            {{ $races := .JSON.Array "race" }}
+            {{ if gt (len $races) 0 }}
+              {{ $race := index $races 0 }}
               <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
                 <!-- Left: Race Details -->
                 <div>
-                  <div style="margin-bottom: 16px;">
-                    <h3 class="size-h3 color-primary" style="margin: 0 0 8px 0;">{{ $nextEvent.String "session" }}</h3>
-                    <p class="color-subdue" style="margin: 0 0 12px 0;">Round {{ .JSON.Int "round" }} • {{ $nextEvent.String "date" }} at {{ $nextEvent.String "time" }}</p>
-                    
+                  <div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                       <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
                         <span class="color-subdue" style="font-size: 0.85em; display: block;">Circuit</span>
-                        <div class="color-primary" style="font-weight: bold;">{{ $circuit.String "circuitName" }}</div>
+                        <div class="color-primary" style="font-weight: bold;">{{ $race.String "circuit.circuitName" }}</div>
                       </div>
                       <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
                         <span class="color-subdue" style="font-size: 0.85em; display: block;">Laps</span>
@@ -82,25 +136,25 @@
                       </div>
                       <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
                         <span class="color-subdue" style="font-size: 0.85em; display: block;">Distance</span>
-                        <div class="color-primary" style="font-weight: bold;">{{ $race.Float "totalDistanceKm" | printf "%.2f" }} km</div>
+                        <div class="color-primary" style="font-weight: bold;">{{ $race.Float "totalDistanceKm" | printf "%.2f" }} / {{ $race.Float "circuit.circuitLengthKm" | printf "%.3f" }} km</div>
                       </div>
                       <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
                         <span class="color-subdue" style="font-size: 0.85em; display: block;">Fastest Lap</span>
-                        <div class="color-primary" style="font-weight: bold; font-size: 0.95em;">{{ $circuit.String "lapRecord" }}</div>
+                        <div class="color-primary" style="font-weight: bold; font-size: 0.95em;">{{ $race.String "circuit.lapRecord" }}</div>
                       </div>
                     </div>
                     
                     <div style="background: var(--color-widget-background-highlight); padding: 12px; border-radius: 4px;">
                       <span class="color-subdue" style="font-size: 0.85em; display: block; margin-bottom: 4px;">Fastest Lap Holder</span>
-                      <div class="color-primary" style="font-weight: bold;">{{ $circuit.String "fastestLapDriverName" }}</div>
+                      <div class="color-primary" style="font-weight: bold;">{{ $race.String "circuit.fastestLapDriverName" }} <span class="color-subdue" style="font-weight: normal;">({{ $race.Int "circuit.fastestLapYear" }})</span></div>
                     </div>
                   </div>
                 </div>
                 
                 <!-- Right: Track Map & Weather -->
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                  <div style="display: flex; align-items: center; justify-content: center; background: var(--color-widget-background-highlight); border-radius: 4px; padding: 12px; flex: 1; min-height: 200px;">
-                    <img src="http://f1_api:4463/f1/next_map/" alt="Track Map" style="max-width: 100%; height: auto; border-radius: 4px;">
+                <div style="display: flex; flex-direction: column; height: 100%;">
+                  <div style="display: flex; align-items: center; justify-content: center; background: var(--color-widget-background-highlight); border-radius: 4px; padding: 12px; flex: 1; min-height: 0; overflow: hidden;">
+                    <img src="https://f1.jr4.in/f1/next_map/" alt="Track Map" style="max-width: 100%; max-height: 100%; width: auto; height: 100%; object-fit: contain; border-radius: 4px;">
                   </div>
                 </div>
               </div>
@@ -109,64 +163,210 @@
             {{ end }}
 
         - type: custom-api
-          title: Last Race Results
-          cache: 2h
-          url: https://f1api.dev/api/2025/races
-          template: | # html
-            {{ $races := .JSON.Array "races" }}
-            {{ if gt (len $races) 0 }}
-              {{ $lastRace := index $races (sub (len $races) 1) }}
-              {{ if ne $lastRace nil }}
-                {{ $results := $lastRace.Array "results" }}
-                {{ if gt (len $results) 0 }}
-                  <ul class="list list-gap-3" style="font-size: 0.9em;">
-                    <li style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-widget-background-highlight);">
-                      <p class="color-subdue" style="margin: 0 0 4px 0; font-size: 0.85em;">{{ $lastRace.String "name" }}</p>
-                      <h4 class="color-primary" style="margin: 0; font-size: 1em; font-weight: bold;">Race Results</h4>
-                    </li>
-                    {{ range $results }}
-                      {{ if lt (.Int "position") 4 }}
-                        <li class="flex gap-3 items-center" style="padding: 6px 0;">
-                          <div style="flex-shrink: 0; width: 28px; text-align: center; font-weight: bold; color: {{ if eq (.Int "position") 1 }}#FFD700{{ else if eq (.Int "position") 2 }}#C0C0C0{{ else }}#CD7F32{{ end }};">{{ .Int "position" }}</div>
-                          <div style="flex: 1; min-width: 0;">
-                            <div class="color-primary" style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .Object "driver" | index "surname" }}</div>
-                            <div class="color-subdue" style="font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .Object "team" | index "name" }}</div>
-                          </div>
-                          <div style="flex-shrink: 0; font-weight: bold; color: var(--color-primary);">+{{ .Int "points" }} pts</div>
-                        </li>
-                      {{ end }}
-                    {{ end }}
-                  </ul>
-                {{ else }}
-                  <p class="color-negative">No race results found.</p>
-                {{ end }}
-              {{ else }}
-                <p class="color-subdue">No race data available.</p>
-              {{ end }}
-            {{ else }}
-              <p class="color-subdue">No races data available.</p>
-            {{ end }}
-
-    - size: small
-      widgets:
-        - type: custom-api
-          title: Circuit Weather
-          cache: 30m
+          title: Weekend Timeline
+          cache: 15m
+          timeout: 20s
           url: http://f1_api:4463/f1/next_race/
+          template: | # html
+            {{ $nextKey := .JSON.String "next_event.session" }}
+            {{ $lastKey := .JSON.String "last_session.session.name" }}
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              {{ if .JSON.Exists "race.0.schedule.fp1.date" }}
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $lastKey "Free Practice 1" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
+                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $lastKey "Free Practice 1" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
+                  <div style="flex: 1;">
+                    <div class="color-primary" style="font-weight: bold;">FP1</div>
+                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.fp1.date" }} {{ .JSON.String "race.0.schedule.fp1.time" }}</div>
+                  </div>
+                  <div style="font-size: 0.78em;">{{ if eq $lastKey "Free Practice 1" }}Latest{{ else }}Done{{ end }}</div>
+                </div>
+              {{ end }}
+
+              {{ if .JSON.Exists "race.0.schedule.fp2.date" }}
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $lastKey "Free Practice 2" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
+                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $lastKey "Free Practice 2" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
+                  <div style="flex: 1;">
+                    <div class="color-primary" style="font-weight: bold;">FP2</div>
+                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.fp2.date" }} {{ .JSON.String "race.0.schedule.fp2.time" }}</div>
+                  </div>
+                  <div style="font-size: 0.78em;">{{ if eq $lastKey "Free Practice 2" }}Latest{{ else }}Done{{ end }}</div>
+                </div>
+              {{ end }}
+
+              {{ if .JSON.Exists "race.0.schedule.fp3.date" }}
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $nextKey "Free Practice 3" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
+                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $nextKey "Free Practice 3" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
+                  <div style="flex: 1;">
+                    <div class="color-primary" style="font-weight: bold;">FP3</div>
+                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.fp3.date" }} {{ .JSON.String "race.0.schedule.fp3.time" }}</div>
+                  </div>
+                  <div style="font-size: 0.78em;">{{ if eq $nextKey "Free Practice 3" }}Next{{ else }}Upcoming{{ end }}</div>
+                </div>
+              {{ end }}
+
+              {{ if .JSON.Exists "race.0.schedule.qualy.date" }}
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $nextKey "Qualifying" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
+                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $nextKey "Qualifying" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
+                  <div style="flex: 1;">
+                    <div class="color-primary" style="font-weight: bold;">Qualifying</div>
+                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.qualy.date" }} {{ .JSON.String "race.0.schedule.qualy.time" }}</div>
+                  </div>
+                  <div style="font-size: 0.78em;">{{ if eq $nextKey "Qualifying" }}Next{{ else }}Upcoming{{ end }}</div>
+                </div>
+              {{ end }}
+
+              {{ if .JSON.Exists "race.0.schedule.race.date" }}
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $nextKey "Race" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
+                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $nextKey "Race" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
+                  <div style="flex: 1;">
+                    <div class="color-primary" style="font-weight: bold;">Race</div>
+                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.race.date" }} {{ .JSON.String "race.0.schedule.race.time" }}</div>
+                  </div>
+                  <div style="font-size: 0.78em;">{{ if eq $nextKey "Race" }}Next{{ else }}Upcoming{{ end }}</div>
+                </div>
+              {{ end }}
+            </div>
+        
+        - type: custom-api
+          title: Next Race
+          cache: 1h
+          timeout: 20s
+          url: http://f1_api:4463/f1/next_race/following/
           template: | # html
             {{ $races := .JSON.Array "race" }}
             {{ if gt (len $races) 0 }}
               {{ $race := index $races 0 }}
-              {{ $circuit := $race.Object "circuit" }}
-              {{ $city := $circuit.String "city" }}
-              {{ $country := $circuit.String "country" }}
-              <div style="padding: 8px 0;">
-                <p class="color-subdue" style="margin: 0 0 8px 0; font-size: 0.85em; text-align: center;">{{ $city }}, {{ $country }}</p>
-                <div style="background: var(--color-widget-background-highlight); padding: 10px; border-radius: 4px; text-align: center;">
-                  <span class="color-subdue" style="font-size: 0.8em; display: block; margin-bottom: 4px;">Track Location</span>
-                  <div class="color-primary" style="font-size: 1.4em; font-weight: bold;">{{ $city }}</div>
+              {{ $country := $race.String "circuit.country" }}
+              {{ $track := $race.String "circuit.circuitName" }}
+              {{ $raceDate := .JSON.String "race.0.schedule.race.date" }}
+              {{ $raceDateTime := .JSON.String "race.0.schedule.race.datetime_rfc3339" }}
+              <div style="padding: 6px 0;">
+                  <div class="color-primary" style="font-size: 1em; font-weight: 700; line-height: 1.35;">{{ $country }} - {{ $track }}</div>
+                  <div class="color-subdue" style="font-size: 0.76em; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; line-height: 1.4;">
+                    <span>in</span>
+                    {{ if ne $raceDateTime "" }}
+                      <span class="color-primary" style="font-weight: 700;" {{ $raceDateTime | parseTime "rfc3339" | toRelativeTime }}></span>
+                    {{ else }}
+                      <span class="color-primary" style="font-weight: 700;">TBA</span>
+                    {{ end }}
+                    {{ if ne $raceDate "" }}<span>({{ $raceDate | parseTime "DateOnly" | formatTime "Jan 2" }})</span>{{ end }}
+                  </div>
+                </div>
+            {{ else if ne (.JSON.String "message") "" }}
+              <p class="color-subdue">{{ .JSON.String "message" }}</p>
+            {{ else }}
+              <p class="color-negative">No next race data available.</p>
+            {{ end }}
+            
+
+    - size: full
+      widgets:
+        - type: custom-api
+          title: Last Completed Session
+          cache: 15m
+          timeout: 20s
+          url: http://f1_api:4463/f1/next_race/
+          template: | # html
+            {{ $results := .JSON.Array "last_session.results" }}
+            {{ $sessionKey := .JSON.String "last_session.session.key" }}
+            {{ if .JSON.Exists "last_session.session.name" }}
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="background: var(--color-widget-background-highlight); border-radius: 6px; padding: 14px;">
+                  <div class="color-primary" style="font-size: 1.2em; font-weight: bold; margin-bottom: 4px;">{{ .JSON.String "last_session.session.name" }}</div>
+                  <div class="color-subdue">Round {{ .JSON.Int "last_session.round" }} • {{ .JSON.String "last_session.event_name" }}</div>
+                </div>
+
+                <div style="background: var(--color-widget-background-highlight); border-radius: 6px; padding: 14px;">
+                  <div class="color-primary" style="font-size: 1.05em; font-weight: bold; margin-bottom: 10px;">Top 10</div>
+                  {{ if gt (len $results) 0 }}
+                    <ul class="list list-gap-3" style="font-size: 0.9em;">
+                      {{ range $results }}
+                        <li class="flex gap-3 items-center" style="padding: {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}10px 0{{ else }}8px 0{{ end }}; border-bottom: 1px solid var(--color-background);">
+                          <div style="flex-shrink: 0; width: 30px; text-align: center; font-weight: bold; color: {{ if eq (.Int "position") 1 }}#FFD700{{ else if eq (.Int "position") 2 }}#C0C0C0{{ else if eq (.Int "position") 3 }}#CD7F32{{ else }}var(--color-primary){{ end }};">P{{ .Int "position" }}</div>
+                          <div style="flex: 1; min-width: 0;">
+                            <div class="color-primary" style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .String "driver" }}</div>
+                            <div class="color-subdue" style="font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .String "team" }}</div>
+                          </div>
+                          {{ if or (eq $sessionKey "fp1") (eq $sessionKey "fp2") (eq $sessionKey "fp3") }}
+                            <div style="flex-shrink: 0; min-width: 44px; text-align: right; font-size: 0.82em;">
+                              <span class="color-primary" style="font-weight: bold;">{{ .Int "laps_completed" }}L</span>
+                            </div>
+                          {{ else if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}
+                            <div style="flex-shrink: 0; min-width: 102px; text-align: right; font-size: 0.73em; line-height: 1.2;">
+                              <div style="display: inline-flex; flex-direction: column; gap: 3px; min-width: 102px; padding: 6px 8px; border-radius: 7px; background: color-mix(in srgb, var(--color-widget-background-highlight) 72%, transparent);">
+                                <div style="display: flex; justify-content: space-between; gap: 8px; white-space: nowrap;">
+                                  <span class="color-subdue">P1</span>
+                                  <span class="color-primary" style="font-weight: 700;">{{ if ne (.String "leader_gap") "" }}{{ .String "leader_gap" }}{{ else }}&mdash;{{ end }}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; gap: 8px; white-space: nowrap;">
+                                  <span class="color-subdue">Prev</span>
+                                  <span class="color-primary" style="font-weight: 700;">{{ if and (ne (.String "ahead_gap") "") (ne (.String "ahead_gap") "-") }}{{ .String "ahead_gap" }}{{ else }}&mdash;{{ end }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          {{ else if or (eq $sessionKey "race") (eq $sessionKey "sprintRace") }}
+                            <div style="flex-shrink: 0; min-width: 44px; text-align: center; font-size: 0.84em; font-weight: bold; color: {{ if gt (.Int "grid_delta") 0 }}#22c55e{{ else if lt (.Int "grid_delta") 0 }}#ef4444{{ else }}#9ca3af{{ end }};">
+                              {{ .String "grid_delta_text" }}{{ if ne (.String "penalty_marker") "" }}<span style="color: #ef4444; margin-left: 2px;">!</span>{{ end }}
+                            </div>
+                          {{ end }}
+                          <div style="flex-shrink: 0; min-width: {{ if or (eq $sessionKey "race") (eq $sessionKey "sprintRace") }}72px{{ else if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}62px{{ else }}28px{{ end }}; text-align: center;">
+                            {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}
+                              <div style="display: inline-flex; flex-direction: column; align-items: center; gap: 5px;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 7px; border-radius: 999px; background: color-mix(in srgb, var(--color-background) 65%, transparent); white-space: nowrap;">
+                                  {{ range $index, $mark := .Array "sector_marks" }}
+                                    {{ if eq ($mark.String "") "purple" }}
+                                      <span style="display: inline-block; width: 11px; height: 4px; border-radius: 999px; background: hsl(278 48% 74%);"></span>
+                                    {{ else if eq ($mark.String "") "green" }}
+                                      <span style="display: inline-block; width: 11px; height: 4px; border-radius: 999px; background: hsl(82 96% 67%);"></span>
+                                    {{ else }}
+                                      <span style="display: inline-block; width: 11px; height: 4px; border-radius: 999px; background: #999;"></span>
+                                    {{ end }}
+                                  {{ end }}
+                                </span>
+                                {{ if ne (.String "compound") "" }}
+                                  <span style="font-size: 0.74em; font-weight: 800; letter-spacing: 0.04em;">
+                                    <span class="color-subdue">[</span><span style="color: {{ if eq (.String "compound") "S" }}#ff6e79{{ else if eq (.String "compound") "M" }}#ffb86c{{ else if eq (.String "compound") "H" }}#999{{ else if eq (.String "compound") "I" }}#c3fb5b{{ else if eq (.String "compound") "R" }}hsl(278 48% 74%){{ else }}#999{{ end }};">{{ if eq (.String "compound") "S" }}s{{ else if eq (.String "compound") "M" }}m{{ else if eq (.String "compound") "H" }}h{{ else if eq (.String "compound") "I" }}i{{ else if eq (.String "compound") "R" }}w{{ else }}-{{ end }}</span><span class="color-subdue">]</span>
+                                  </span>
+                                {{ end }}
+                              </div>
+                            {{ else if and (or (eq $sessionKey "race") (eq $sessionKey "sprintRace")) (gt (len (.Array "tyre_sequence")) 0) }}
+                              <span style="font-size: 0.84em; font-weight: bold; letter-spacing: 0.02em;">
+                                <span class="color-subdue">[</span>
+                                {{ range $index, $compound := .Array "tyre_sequence" }}
+                                  {{ if gt $index 0 }}<span class="color-subdue">,</span>{{ end }}
+                                  <span style="color: {{ if eq ($compound.String "") "S" }}#dc2626{{ else if eq ($compound.String "") "M" }}#f59e0b{{ else if eq ($compound.String "") "H" }}#d1d5db{{ else if eq ($compound.String "") "I" }}#16a34a{{ else }}#2563eb{{ end }};">{{ $compound.String "" }}</span>
+                                {{ end }}
+                                <span class="color-subdue">]</span>
+                              </span>
+                            {{ else if ne (.String "compound") "" }}
+                              <span style="font-size: 0.84em; font-weight: bold; letter-spacing: 0.02em;"><span class="color-subdue">[</span><span style="color: {{ if eq (.String "compound") "S" }}#dc2626{{ else if eq (.String "compound") "M" }}#f59e0b{{ else if eq (.String "compound") "H" }}#d1d5db{{ else if eq (.String "compound") "I" }}#16a34a{{ else }}#2563eb{{ end }};">{{ .String "compound" }}</span><span class="color-subdue">]</span></span>
+                            {{ else }}
+                              <span class="color-subdue" style="font-size: 0.8em;">-</span>
+                            {{ end }}
+                          </div>
+                          <div style="flex-shrink: 0; min-width: {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}96px{{ else }}78px{{ end }}; text-align: right;">
+                            {{ if ne (.String "detail") "" }}
+                              {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}
+                                <div style="display: inline-flex; align-items: center; justify-content: flex-end; min-width: 88px; padding: 6px 9px; border-radius: 7px; background: color-mix(in srgb, var(--color-widget-background-highlight) 78%, transparent);">
+                                  <div class="color-primary" style="font-weight: 800; white-space: nowrap; letter-spacing: 0.01em;">{{ .String "detail" }}</div>
+                                </div>
+                              {{ else }}
+                                <div class="color-primary" style="font-weight: bold; white-space: nowrap;">{{ .String "detail" }}</div>
+                              {{ end }}
+                            {{ else if ne (.String "status") "" }}
+                              <div style="font-size: 0.82em; white-space: nowrap;">{{ .String "status" }}</div>
+                            {{ end }}
+                          </div>
+                        </li>
+                      {{ end }}
+                    </ul>
+                  {{ else if ne (.String "last_session.load_error") "" }}
+                    <p class="color-negative">Session data is not available right now.</p>
+                  {{ else }}
+                    <p class="color-subdue">Results have not populated yet.</p>
+                  {{ end }}
                 </div>
               </div>
             {{ else }}
-              <p class="color-negative">No race data available</p>
+              <p class="color-negative">No completed session data available.</p>
             {{ end }}

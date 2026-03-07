@@ -128,6 +128,14 @@ http:
       middlewares:
         - default-chain
 
+    f1api:
+      rule: "Host(`f1.jr4.in`) || Host(`f1api.jr4.in`)"
+      entryPoints:
+        - web
+      service: f1api
+      middlewares:
+        - default-chain
+
     siyuan:
       rule: "Host(`siyuan.jr4.in`)"
       entryPoints:
@@ -176,6 +184,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://glance:8080"
+
+    f1api:
+      loadBalancer:
+        servers:
+          - url: "http://f1_api:4463"
 
     swingmusic:
       loadBalancer:
