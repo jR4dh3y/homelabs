@@ -1,0 +1,17 @@
+# Local runtime/generated files
+.env
+*.log
+
+# If bind-mounted later instead of named volumes
+invidious_postgres_data/
+companion_cache/
+
+# Temp/cache artifacts
+tmp/
+cache/
+config/
+docker/
+workspace/
+config/
+approve-device.json
+startup.sh

@@ -69,9 +69,9 @@ sudo systemctl enable docker
 sudo systemctl start docker
 
 # 5. Setup Project Directories (if needed)
-# Ensure dapps, devops, infra exist as per README
+# Ensure apps, devops, infra exist as per README
 # echo -e "${GREEN}[5/5] Checking project structure...${NC}"
-# mkdir -p dapps devops infra
+# mkdir -p apps devops infra
 
 echo -e "${BLUE}------------------------------------------------${NC}"
 echo -e "${GREEN}Installation Complete!${NC}"

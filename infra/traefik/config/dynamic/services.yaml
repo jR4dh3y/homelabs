@@ -93,6 +93,18 @@ http:
         - default-chain
 
     # ============================================
+    # DEVELOPMENT
+    # ============================================
+    
+    opencode:
+      rule: "Host(`code.jr4.in`)"
+      entryPoints:
+        - web
+      service: opencode
+      middlewares:
+        - auth-chain
+
+    # ============================================
     # UTILITIES
     # ============================================
 
@@ -256,6 +268,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://excalidraw:80"
+
+    opencode:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
 
     # --- Host networking containers ---
     

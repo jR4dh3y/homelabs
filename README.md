@@ -11,7 +11,7 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 ## Directory Layout
 
 - **`infra/`**: Core infrastructure (Traefik, databases, Portainer, Cloudflared).
-- **`dapps/`**: User-facing applications (Jellyfin, Glance, Vidown, etc.).
+- **`apps/`**: User-facing applications (Jellyfin, Glance, Vidown, etc.).
 - **`devops/`**: Development tools (Gitea, runners, Renovate, GitLab).
 
 ## Quick Start
@@ -24,7 +24,7 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
    ```
 4. **Start a service** (example: Jellyfin):
    ```bash
-   docker compose -f dapps/jellyfin/docker-compose.yml up -d
+   docker compose -f apps/jellyfin/docker-compose.yml up -d
    ```
 
 ## Services Index
@@ -36,23 +36,22 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 - **[Portainer](infra/portainer/)**: Container management UI.
 - **[Databases](infra/databases/)**: Shared MariaDB & Postgres.
 
-### DApps
+### Apps
 
-- **[AnyConverter](dapps/anyconverter/)**
-- **[ConvertX](dapps/convertx/)**
-- **[Excalidraw](dapps/excalidraw/)**
-- **[Glance](dapps/glance/)**
-- **[Homelab FileManager](dapps/homelab-filemgr/)**
-- **[Invidious](dapps/invidious/)**
-- **[Jellyfin](dapps/jellyfin/)**
-- **[OpenCode](dapps/opencode/)**
-- **[OpenVAS](dapps/openvas/)**
-- **[OpenWebUI](dapps/openwebui/)**
-- **[QBittorrent](dapps/qbittorrent/)**
-- **[Steam Headless](dapps/steam-headless/)**
-- **[SwingMusic](dapps/swingmusic/)**
-- **[Vaultwarden](dapps/vaultwarden/)**
-- **[Vidown](dapps/vidown/)**
+- **[AnyConverter](apps/anyconverter/)**
+- **[ConvertX](apps/convertx/)**
+- **[Excalidraw](apps/excalidraw/)**
+- **[Glance](apps/glance/)**
+- **[Homelab FileManager](apps/homelab-filemgr/)**
+- **[Jellyfin](apps/jellyfin/)**
+- **[OpenCode](apps/opencode/)**
+- **[OpenVAS](archive/openvas/)**
+- **[OpenWebUI](apps/openwebui/)**
+- **[QBittorrent](apps/qbittorrent/)**
+- **[Steam Headless](apps/steam-headless/)**
+- **[SwingMusic](apps/swingmusic/)**
+- **[Vaultwarden](apps/vaultwarden/)**
+- **[Vidown](apps/vidown/)**
 
 ### DevOps & Tools
 
@@ -67,6 +66,7 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 - **[Continuwuity](archive/continuwuity/)**: Matrix homeserver.
 - **[Coturn](archive/coturn/)**: TURN relay for Matrix VoIP.
 - **[GitLab](archive/gitlab/)**
+- **[Invidious](archive/invidious/)**
 - **[OpenClaw](archive/openclaw/)**
 - **[Siyuan](archive/siyuan/)**
 - **[Vikunja](archive/vikunja/)**
@@ -75,28 +75,28 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 
 Start a service:
 ```bash
-docker compose -f dapps/<service>/docker-compose.yml up -d
+docker compose -f apps/<service>/docker-compose.yml up -d
 ```
 
 Stop a service:
 ```bash
-docker compose -f dapps/<service>/docker-compose.yml down
+docker compose -f apps/<service>/docker-compose.yml down
 ```
 
 Follow logs:
 ```bash
-docker compose -f dapps/<service>/docker-compose.yml logs -f
+docker compose -f apps/<service>/docker-compose.yml logs -f
 ```
 
 Update a service:
 ```bash
-docker compose -f dapps/<service>/docker-compose.yml pull
-docker compose -f dapps/<service>/docker-compose.yml up -d
+docker compose -f apps/<service>/docker-compose.yml pull
+docker compose -f apps/<service>/docker-compose.yml up -d
 ```
 
 Validate a compose file:
 ```bash
-docker compose -f dapps/<service>/docker-compose.yml config
+docker compose -f apps/<service>/docker-compose.yml config
 ```
 
 ## Data & Backups

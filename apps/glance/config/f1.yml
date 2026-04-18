@@ -168,62 +168,21 @@
           timeout: 20s
           url: http://f1_api:4463/f1/next_race/
           template: | # html
-            {{ $nextKey := .JSON.String "next_event.session" }}
-            {{ $lastKey := .JSON.String "last_session.session.name" }}
+            {{ $timeline := .JSON.Array "timeline" }}
             <div style="display: flex; flex-direction: column; gap: 10px;">
-              {{ if .JSON.Exists "race.0.schedule.fp1.date" }}
-                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $lastKey "Free Practice 1" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
-                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $lastKey "Free Practice 1" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
-                  <div style="flex: 1;">
-                    <div class="color-primary" style="font-weight: bold;">FP1</div>
-                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.fp1.date" }} {{ .JSON.String "race.0.schedule.fp1.time" }}</div>
+              {{ if gt (len $timeline) 0 }}
+                {{ range $timeline }}
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if or (eq (.String "state") "latest") (eq (.String "state") "next") }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
+                    <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if or (eq (.String "state") "latest") (eq (.String "state") "next") }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
+                    <div style="flex: 1;">
+                      <div class="color-primary" style="font-weight: bold;">{{ .String "short_name" }}</div>
+                      <div class="color-subdue" style="font-size: 0.82em;">{{ .String "date" }} {{ .String "time" }}</div>
+                    </div>
+                    <div style="font-size: 0.78em;">{{ .String "state_label" }}</div>
                   </div>
-                  <div style="font-size: 0.78em;">{{ if eq $lastKey "Free Practice 1" }}Latest{{ else }}Done{{ end }}</div>
-                </div>
-              {{ end }}
-
-              {{ if .JSON.Exists "race.0.schedule.fp2.date" }}
-                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $lastKey "Free Practice 2" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
-                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $lastKey "Free Practice 2" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
-                  <div style="flex: 1;">
-                    <div class="color-primary" style="font-weight: bold;">FP2</div>
-                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.fp2.date" }} {{ .JSON.String "race.0.schedule.fp2.time" }}</div>
-                  </div>
-                  <div style="font-size: 0.78em;">{{ if eq $lastKey "Free Practice 2" }}Latest{{ else }}Done{{ end }}</div>
-                </div>
-              {{ end }}
-
-              {{ if .JSON.Exists "race.0.schedule.fp3.date" }}
-                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $nextKey "Free Practice 3" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
-                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $nextKey "Free Practice 3" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
-                  <div style="flex: 1;">
-                    <div class="color-primary" style="font-weight: bold;">FP3</div>
-                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.fp3.date" }} {{ .JSON.String "race.0.schedule.fp3.time" }}</div>
-                  </div>
-                  <div style="font-size: 0.78em;">{{ if eq $nextKey "Free Practice 3" }}Next{{ else }}Upcoming{{ end }}</div>
-                </div>
-              {{ end }}
-
-              {{ if .JSON.Exists "race.0.schedule.qualy.date" }}
-                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $nextKey "Qualifying" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
-                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $nextKey "Qualifying" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
-                  <div style="flex: 1;">
-                    <div class="color-primary" style="font-weight: bold;">Qualifying</div>
-                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.qualy.date" }} {{ .JSON.String "race.0.schedule.qualy.time" }}</div>
-                  </div>
-                  <div style="font-size: 0.78em;">{{ if eq $nextKey "Qualifying" }}Next{{ else }}Upcoming{{ end }}</div>
-                </div>
-              {{ end }}
-
-              {{ if .JSON.Exists "race.0.schedule.race.date" }}
-                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: {{ if eq $nextKey "Race" }}var(--color-widget-background-highlight){{ else }}var(--color-background){{ end }};">
-                  <div style="width: 8px; height: 8px; border-radius: 999px; background: {{ if eq $nextKey "Race" }}var(--color-primary){{ else }}var(--color-subdue){{ end }};"></div>
-                  <div style="flex: 1;">
-                    <div class="color-primary" style="font-weight: bold;">Race</div>
-                    <div class="color-subdue" style="font-size: 0.82em;">{{ .JSON.String "race.0.schedule.race.date" }} {{ .JSON.String "race.0.schedule.race.time" }}</div>
-                  </div>
-                  <div style="font-size: 0.78em;">{{ if eq $nextKey "Race" }}Next{{ else }}Upcoming{{ end }}</div>
-                </div>
+                {{ end }}
+              {{ else }}
+                <p class="color-negative">Timeline data unavailable.</p>
               {{ end }}
             </div>
         
@@ -265,15 +224,15 @@
           title: Last Completed Session
           cache: 15m
           timeout: 20s
-          url: http://f1_api:4463/f1/next_race/
+          url: http://f1_api:4463/f1/next_race/last_session/
           template: | # html
-            {{ $results := .JSON.Array "last_session.results" }}
-            {{ $sessionKey := .JSON.String "last_session.session.key" }}
-            {{ if .JSON.Exists "last_session.session.name" }}
+            {{ $results := .JSON.Array "results" }}
+            {{ $sessionKey := .JSON.String "session.key" }}
+            {{ if .JSON.Exists "session.name" }}
               <div style="display: flex; flex-direction: column; gap: 14px;">
                 <div style="background: var(--color-widget-background-highlight); border-radius: 6px; padding: 14px;">
-                  <div class="color-primary" style="font-size: 1.2em; font-weight: bold; margin-bottom: 4px;">{{ .JSON.String "last_session.session.name" }}</div>
-                  <div class="color-subdue">Round {{ .JSON.Int "last_session.round" }} • {{ .JSON.String "last_session.event_name" }}</div>
+                  <div class="color-primary" style="font-size: 1.2em; font-weight: bold; margin-bottom: 4px;">{{ .JSON.String "session.name" }}</div>
+                  <div class="color-subdue">Round {{ .JSON.Int "round" }} • {{ .JSON.String "event_name" }}</div>
                 </div>
 
                 <div style="background: var(--color-widget-background-highlight); border-radius: 6px; padding: 14px;">
@@ -284,7 +243,7 @@
                         <li class="flex gap-3 items-center" style="padding: {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}10px 0{{ else }}8px 0{{ end }}; border-bottom: 1px solid var(--color-background);">
                           <div style="flex-shrink: 0; width: 30px; text-align: center; font-weight: bold; color: {{ if eq (.Int "position") 1 }}#FFD700{{ else if eq (.Int "position") 2 }}#C0C0C0{{ else if eq (.Int "position") 3 }}#CD7F32{{ else }}var(--color-primary){{ end }};">P{{ .Int "position" }}</div>
                           <div style="flex: 1; min-width: 0;">
-                            <div class="color-primary" style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .String "driver" }}</div>
+                            <div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{ if eq (.String "fastest_lap") "true" }}var(--badge-success){{ else }}var(--color-primary){{ end }};">{{ .String "driver" }}</div>
                             <div class="color-subdue" style="font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ .String "team" }}</div>
                           </div>
                           {{ if or (eq $sessionKey "fp1") (eq $sessionKey "fp2") (eq $sessionKey "fp3") }}
@@ -305,41 +264,47 @@
                               </div>
                             </div>
                           {{ else if or (eq $sessionKey "race") (eq $sessionKey "sprintRace") }}
-                            <div style="flex-shrink: 0; min-width: 44px; text-align: center; font-size: 0.84em; font-weight: bold; color: {{ if gt (.Int "grid_delta") 0 }}#22c55e{{ else if lt (.Int "grid_delta") 0 }}#ef4444{{ else }}#9ca3af{{ end }};">
-                              {{ .String "grid_delta_text" }}{{ if ne (.String "penalty_marker") "" }}<span style="color: #ef4444; margin-left: 2px;">!</span>{{ end }}
+                            <div style="flex-shrink: 0; min-width: 102px; text-align: right; font-size: 0.73em; line-height: 1.2;">
+                              <div style="display: inline-flex; flex-direction: column; gap: 3px; min-width: 102px; padding: 6px 8px; border-radius: 7px; background: color-mix(in srgb, var(--color-widget-background-highlight) 72%, transparent);">
+                                <div style="display: flex; justify-content: space-between; gap: 8px; white-space: nowrap;">
+                                  <span class="color-subdue">P1</span>
+                                  <span class="color-primary" style="font-weight: 700;">{{ if ne (.String "leader_gap") "" }}{{ .String "leader_gap" }}{{ else }}&mdash;{{ end }}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; gap: 8px; white-space: nowrap;">
+                                  <span class="color-subdue">Grid</span>
+                                  <span style="font-weight: 700; color: {{ if gt (.Int "grid_delta") 0 }}#22c55e{{ else if lt (.Int "grid_delta") 0 }}#ef4444{{ else }}#9ca3af{{ end }};">{{ .String "grid_delta_text" }}</span>
+                                </div>
+                              </div>
+                              {{ if ne (.String "penalty_marker") "" }}
+                                <div style="margin-top: 4px; font-size: 0.72em; color: #ef4444; font-weight: 700;">Penalty</div>
+                              {{ end }}
                             </div>
                           {{ end }}
                           <div style="flex-shrink: 0; min-width: {{ if or (eq $sessionKey "race") (eq $sessionKey "sprintRace") }}72px{{ else if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}62px{{ else }}28px{{ end }}; text-align: center;">
                             {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}
                               <div style="display: inline-flex; flex-direction: column; align-items: center; gap: 5px;">
-                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 7px; border-radius: 999px; background: color-mix(in srgb, var(--color-background) 65%, transparent); white-space: nowrap;">
-                                  {{ range $index, $mark := .Array "sector_marks" }}
-                                    {{ if eq ($mark.String "") "purple" }}
-                                      <span style="display: inline-block; width: 11px; height: 4px; border-radius: 999px; background: hsl(278 48% 74%);"></span>
-                                    {{ else if eq ($mark.String "") "green" }}
-                                      <span style="display: inline-block; width: 11px; height: 4px; border-radius: 999px; background: hsl(82 96% 67%);"></span>
-                                    {{ else }}
-                                      <span style="display: inline-block; width: 11px; height: 4px; border-radius: 999px; background: #999;"></span>
-                                    {{ end }}
-                                  {{ end }}
-                                </span>
+                                {{ if ne (.String "sector_marks_text") "" }}
+                                  <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 7px; border-radius: 999px; background: color-mix(in srgb, var(--color-background) 65%, transparent); white-space: nowrap; font-size: 0.68em; letter-spacing: 0.08em;">
+                                    {{ .String "sector_marks_text" }}
+                                  </span>
+                                {{ end }}
                                 {{ if ne (.String "compound") "" }}
                                   <span style="font-size: 0.74em; font-weight: 800; letter-spacing: 0.04em;">
-                                    <span class="color-subdue">[</span><span style="color: {{ if eq (.String "compound") "S" }}#ff6e79{{ else if eq (.String "compound") "M" }}#ffb86c{{ else if eq (.String "compound") "H" }}#999{{ else if eq (.String "compound") "I" }}#c3fb5b{{ else if eq (.String "compound") "R" }}hsl(278 48% 74%){{ else }}#999{{ end }};">{{ if eq (.String "compound") "S" }}s{{ else if eq (.String "compound") "M" }}m{{ else if eq (.String "compound") "H" }}h{{ else if eq (.String "compound") "I" }}i{{ else if eq (.String "compound") "R" }}w{{ else }}-{{ end }}</span><span class="color-subdue">]</span>
+                                    <span class="color-subdue">[</span><span style="color: {{ if eq (.String "compound") "S" }}#ff6e79{{ else if eq (.String "compound") "M" }}#ffb86c{{ else if eq (.String "compound") "H" }}#999{{ else if eq (.String "compound") "I" }}#c3fb5b{{ else if eq (.String "compound") "W" }}#60a5fa{{ else }}#999{{ end }};">{{ if eq (.String "compound") "S" }}s{{ else if eq (.String "compound") "M" }}m{{ else if eq (.String "compound") "H" }}h{{ else if eq (.String "compound") "I" }}i{{ else if eq (.String "compound") "W" }}w{{ else }}-{{ end }}</span><span class="color-subdue">]</span>
                                   </span>
                                 {{ end }}
                               </div>
                             {{ else if and (or (eq $sessionKey "race") (eq $sessionKey "sprintRace")) (gt (len (.Array "tyre_sequence")) 0) }}
-                              <span style="font-size: 0.84em; font-weight: bold; letter-spacing: 0.02em;">
+                              <span style="display: inline-flex; align-items: center; justify-content: center; gap: 0 2px; flex-wrap: wrap; max-width: 84px; font-size: 0.78em; font-weight: 800; line-height: 1.1; letter-spacing: 0.02em;">
                                 <span class="color-subdue">[</span>
                                 {{ range $index, $compound := .Array "tyre_sequence" }}
                                   {{ if gt $index 0 }}<span class="color-subdue">,</span>{{ end }}
-                                  <span style="color: {{ if eq ($compound.String "") "S" }}#dc2626{{ else if eq ($compound.String "") "M" }}#f59e0b{{ else if eq ($compound.String "") "H" }}#d1d5db{{ else if eq ($compound.String "") "I" }}#16a34a{{ else }}#2563eb{{ end }};">{{ $compound.String "" }}</span>
+                                  <span style="color: {{ if eq ($compound.String "") "S" }}#dc2626{{ else if eq ($compound.String "") "M" }}#f59e0b{{ else if eq ($compound.String "") "H" }}#d1d5db{{ else if eq ($compound.String "") "I" }}#16a34a{{ else if eq ($compound.String "") "W" }}#60a5fa{{ else }}#9ca3af{{ end }};">{{ if eq ($compound.String "") "S" }}s{{ else if eq ($compound.String "") "M" }}m{{ else if eq ($compound.String "") "H" }}h{{ else if eq ($compound.String "") "I" }}i{{ else if eq ($compound.String "") "W" }}w{{ else }}-{{ end }}</span>
                                 {{ end }}
                                 <span class="color-subdue">]</span>
                               </span>
                             {{ else if ne (.String "compound") "" }}
-                              <span style="font-size: 0.84em; font-weight: bold; letter-spacing: 0.02em;"><span class="color-subdue">[</span><span style="color: {{ if eq (.String "compound") "S" }}#dc2626{{ else if eq (.String "compound") "M" }}#f59e0b{{ else if eq (.String "compound") "H" }}#d1d5db{{ else if eq (.String "compound") "I" }}#16a34a{{ else }}#2563eb{{ end }};">{{ .String "compound" }}</span><span class="color-subdue">]</span></span>
+                              <span style="font-size: 0.84em; font-weight: bold; letter-spacing: 0.02em;"><span class="color-subdue">[</span><span style="color: {{ if eq (.String "compound") "S" }}#dc2626{{ else if eq (.String "compound") "M" }}#f59e0b{{ else if eq (.String "compound") "H" }}#d1d5db{{ else if eq (.String "compound") "I" }}#16a34a{{ else if eq (.String "compound") "W" }}#60a5fa{{ else }}#2563eb{{ end }};">{{ if eq (.String "compound") "S" }}s{{ else if eq (.String "compound") "M" }}m{{ else if eq (.String "compound") "H" }}h{{ else if eq (.String "compound") "I" }}i{{ else if eq (.String "compound") "W" }}w{{ else }}-{{ end }}</span><span class="color-subdue">]</span></span>
                             {{ else }}
                               <span class="color-subdue" style="font-size: 0.8em;">-</span>
                             {{ end }}
@@ -348,10 +313,17 @@
                             {{ if ne (.String "detail") "" }}
                               {{ if or (eq $sessionKey "qualy") (eq $sessionKey "sprintQualy") }}
                                 <div style="display: inline-flex; align-items: center; justify-content: flex-end; min-width: 88px; padding: 6px 9px; border-radius: 7px; background: color-mix(in srgb, var(--color-widget-background-highlight) 78%, transparent);">
-                                  <div class="color-primary" style="font-weight: 800; white-space: nowrap; letter-spacing: 0.01em;">{{ .String "detail" }}</div>
+                                  <div style="font-weight: 800; white-space: nowrap; letter-spacing: 0.01em; color: {{ if eq (.String "fastest_lap") "true" }}var(--badge-success){{ else }}var(--color-primary){{ end }};">{{ .String "detail" }}</div>
+                                </div>
+                              {{ else if or (eq $sessionKey "race") (eq $sessionKey "sprintRace") }}
+                                <div style="display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                  <div style="font-weight: bold; white-space: nowrap; color: {{ if eq (.String "fastest_lap") "true" }}var(--badge-success){{ else }}var(--color-primary){{ end }};">{{ .String "detail" }}</div>
+                                  {{ if ne (.String "points") "" }}
+                                    <div class="color-subdue" style="font-size: 0.74em; white-space: nowrap;">{{ .String "points" }} pts</div>
+                                  {{ end }}
                                 </div>
                               {{ else }}
-                                <div class="color-primary" style="font-weight: bold; white-space: nowrap;">{{ .String "detail" }}</div>
+                                <div style="font-weight: bold; white-space: nowrap; color: {{ if eq (.String "fastest_lap") "true" }}var(--badge-success){{ else }}var(--color-primary){{ end }};">{{ .String "detail" }}</div>
                               {{ end }}
                             {{ else if ne (.String "status") "" }}
                               <div style="font-size: 0.82em; white-space: nowrap;">{{ .String "status" }}</div>
@@ -360,7 +332,7 @@
                         </li>
                       {{ end }}
                     </ul>
-                  {{ else if ne (.String "last_session.load_error") "" }}
+                  {{ else if ne (.String "load_error") "" }}
                     <p class="color-negative">Session data is not available right now.</p>
                   {{ else }}
                     <p class="color-subdue">Results have not populated yet.</p>

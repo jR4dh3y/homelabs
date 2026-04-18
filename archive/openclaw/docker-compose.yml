@@ -1,0 +1,40 @@
+services:
+  openclaw:
+    image: node:24-bookworm
+    container_name: openclaw
+    environment:
+      - NODE_ENV=production
+      - HOME=/home/node
+      - TZ=UTC
+      # AI Provider API Keys (user will fill these in .env)
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
+      # OpenRouter specific
+      - OPENROUTER_HTTP_REFERER=${OPENROUTER_HTTP_REFERER:-https://claw.jr4.in}
+      - OPENROUTER_TITLE=${OPENROUTER_TITLE:-OpenClaw}
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      - /DATA/openclaw:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./startup.sh:/startup.sh:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - proxy
+    working_dir: /home/node
+    user: root
+    entrypoint: ["/bin/bash", "/startup.sh"]
+
+networks:
+  proxy:
+    external: true

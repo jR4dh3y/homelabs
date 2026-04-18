@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 import os
 
@@ -74,6 +75,15 @@ def parse_session_datetime(date_str, time_str):
         return None
 
 
+def parse_iso_datetime(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+
 def format_session_time(dt):
     if not dt:
         return None
@@ -103,6 +113,23 @@ def parse_race_datetime_utc(race):
         return None
 
 
+def get_race_schedule_datetimes(race):
+    schedule = race.get("schedule", {})
+    schedule_items = []
+
+    for session_name, session_data in schedule.items():
+        session_dt = parse_iso_datetime(session_data.get("datetime_rfc3339"))
+        if not session_dt:
+            session_dt = parse_session_datetime(session_data.get("date"), session_data.get("time"))
+        if not session_dt:
+            continue
+
+        schedule_items.append((session_name, session_data, session_dt))
+
+    schedule_items.sort(key=lambda item: item[2])
+    return schedule_items
+
+
 def find_upcoming_races(calendar_data):
     now = datetime.now(UTC)
     upcoming = []
@@ -113,6 +140,66 @@ def find_upcoming_races(calendar_data):
             upcoming.append(race)
 
     return upcoming
+
+
+def session_short_name(session_name: str) -> str:
+    readable = {
+        "fp1": "FP1",
+        "fp2": "FP2",
+        "fp3": "FP3",
+        "qualy": "Qualifying",
+        "sprintQualy": "Sprint Qualifying",
+        "sprintRace": "Sprint Race",
+        "race": "Race",
+    }
+    return readable.get(session_name, session_display_name(session_name))
+
+
+def build_weekend_timeline(race):
+    now = datetime.now(MT)
+    schedule_items = get_race_schedule_datetimes(race)
+    if not schedule_items:
+        return []
+
+    last_completed_index = None
+    next_index = None
+
+    for index, (_, _, session_dt) in enumerate(schedule_items):
+        if session_dt <= now:
+            last_completed_index = index
+        elif next_index is None:
+            next_index = index
+
+    timeline = []
+    for index, (session_key, _, session_dt) in enumerate(schedule_items):
+        if last_completed_index is not None and index < last_completed_index:
+            state = "done"
+        elif last_completed_index is not None and index == last_completed_index:
+            state = "latest"
+        elif next_index is not None and index == next_index:
+            state = "next"
+        else:
+            state = "upcoming"
+
+        state_label = {
+            "done": "Done",
+            "latest": "Latest",
+            "next": "Next",
+            "upcoming": "Upcoming",
+        }.get(state, "Upcoming")
+
+        timeline.append(
+            {
+                "key": session_key,
+                "name": session_display_name(session_key),
+                "short_name": session_short_name(session_key),
+                "state": state,
+                "state_label": state_label,
+                **(format_session_time(session_dt) or {}),
+            }
+        )
+
+    return timeline
 
 
 def enrich_race_payload(race, season):
@@ -235,7 +322,10 @@ def normalize_compound(compound):
         "medium": "M",
         "hard": "H",
         "intermediate": "I",
-        "wet": "R",
+        "inter": "I",
+        "wet": "W",
+        "full wet": "W",
+        "extreme wet": "W",
     }
     return mapping.get(text, "")
 
@@ -250,6 +340,13 @@ def parse_intish(value):
         return None
 
     return int(numeric)
+
+
+def parse_position_value(value):
+    position = parse_intish(value)
+    if position is None or position <= 0:
+        return None
+    return position
 
 
 def is_qualifying_session(session_key: str) -> bool:
@@ -331,6 +428,28 @@ def build_driver_session_meta(session):
     return meta
 
 
+def build_race_gap_meta(session):
+    laps = getattr(session, "laps", None)
+    if laps is None or laps.empty or "LapTime" not in laps.columns:
+        return {}
+
+    totals = {}
+
+    for driver_code, driver_laps in laps.groupby("Driver"):
+        valid_laps = driver_laps.dropna(subset=["LapTime"]).sort_values("LapNumber")
+        if valid_laps.empty:
+            continue
+
+        lap_count = int(valid_laps["LapTime"].notna().sum())
+        total_time = valid_laps["LapTime"].sum()
+        totals[str(driver_code)] = {
+            "lap_count": lap_count,
+            "total_time": total_time,
+        }
+
+    return totals
+
+
 def build_qualifying_position_map(session):
     results = getattr(session, "results", None)
     if results is None or results.empty:
@@ -357,10 +476,75 @@ def build_grid_reference_map(year: int, round_number: int, session_key: str):
 
     try:
         compare_session = fastf1.get_session(year, round_number, compare_code)
-        compare_session.load(laps=False, telemetry=False, weather=False, messages=False)
+        # Load with laps so FastF1 can derive qualifying positions from timing data
+        # (Ergast is deprecated for 2025+ sessions; lap-derived positions still work).
+        compare_session.load(laps=True, telemetry=False, weather=False, messages=False)
         return build_qualifying_position_map(compare_session)
     except Exception:
         return {}
+
+
+async def fetch_f1api_race_results(season: int, round_number: int) -> dict:
+    """
+    Fetch race classification from f1api.dev.
+    Returns {abbreviation_upper: entry_dict} or {} on failure/missing data.
+    Entry dict has: position, grid, time_raw, points, fast_lap, status,
+                    driver, surname, abbreviation, team.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"https://f1api.dev/api/{season}/{round_number}/race",
+                timeout=12,
+            )
+        if resp.status_code != 200:
+            return {}
+        races = resp.json().get("races", {})
+        raw_results = races.get("results") if isinstance(races, dict) else None
+        if not raw_results:
+            return {}
+        mapping = {}
+        for entry in raw_results:
+            drv = entry.get("driver") or {}
+            team = entry.get("team") or {}
+            code = str(drv.get("shortName") or "").strip().upper()
+            if not code:
+                continue
+            name = str(drv.get("name") or "").strip()
+            surname = str(drv.get("surname") or "").strip()
+            full_name = f"{name} {surname}".strip() if name else surname
+            grid_raw = parse_intish(entry.get("grid"))
+            mapping[code] = {
+                "position": parse_intish(entry.get("position")) or 0,
+                "grid": grid_raw if grid_raw is not None else 0,
+                "time_raw": str(entry.get("time") or "").strip(),
+                "points": entry.get("points"),
+                "fast_lap": bool(entry.get("fastLap")),
+                "status": str(entry.get("retired") or "Finished").strip(),
+                "driver": full_name or code,
+                "surname": surname or code,
+                "abbreviation": code,
+                "team": str(team.get("teamName") or "").strip(),
+            }
+        return mapping
+    except Exception:
+        return {}
+
+
+def format_f1api_gap(time_raw: str, position: int) -> str:
+    """Convert an f1api.dev race time/gap string to display format."""
+    if position == 1:
+        return "LEAD"
+    t = (time_raw or "").strip()
+    if not t or t.lower() in ("none", "null", ""):
+        return ""
+    # Lapped: "+1 Lap", "+2 Laps", "+1 lap" etc.
+    lower = t.lower()
+    if "lap" in lower:
+        num = "".join(filter(str.isdigit, t))
+        return f"+{num}L" if num else t
+    # Gap already formatted: "+0.895", "+1:23.456"
+    return t
 
 
 def build_best_lap_meta(session):
@@ -388,6 +572,8 @@ def build_best_lap_meta(session):
             sector_laps = accurate_laps.dropna(subset=[sector_key])
             if not sector_laps.empty:
                 best_sector_times[sector_key] = sector_laps[sector_key].min()
+
+    overall_fastest_lap = accurate_laps["LapTime"].min()
 
     meta = {}
     for driver_code, driver_laps in accurate_laps.groupby("Driver"):
@@ -422,6 +608,8 @@ def build_best_lap_meta(session):
             "compound_full": str(best_lap.get("Compound") or "").strip(),
             "fresh_tyre": bool(best_lap.get("FreshTyre")) if best_lap.get("FreshTyre") is not None else None,
             "sector_marks": sector_marks,
+            "sector_marks_text": "/".join(mark[:1].upper() for mark in sector_marks),
+            "fastest_lap": bool(best_lap.get("LapTime") == overall_fastest_lap),
         }
 
     return meta
@@ -465,6 +653,9 @@ def build_lap_based_results(session):
                 "compound_full": lap_meta.get("compound_full") or "",
                 "fresh_tyre": lap_meta.get("fresh_tyre"),
                 "sector_marks": lap_meta.get("sector_marks") or [],
+                "sector_marks_text": lap_meta.get("sector_marks_text") or "",
+                "best_lap_time": lap_meta.get("detail") or "",
+                "fastest_lap": bool(lap_meta.get("fastest_lap")),
                 "laps_completed": session_meta.get("laps_completed") or 0,
                 "tyre_sequence": session_meta.get("tyre_sequence") or [],
                 "tyre_sequence_text": session_meta.get("tyre_sequence_text") or "",
@@ -561,72 +752,170 @@ async def build_last_completed_session_payload(calendar_data, target_season: int
         event_name = getattr(getattr(session, "event", None), "EventName", None) or event_name
         best_lap_meta = build_best_lap_meta(session)
         driver_session_meta = build_driver_session_meta(session)
-        grid_reference_map = build_grid_reference_map(season, int(round_number), last_session["session_key"])
 
-        results_frame = getattr(session, "results", None)
         qualifying_reference_times = {}
-        if results_frame is not None and not results_frame.empty:
-            for _, row in results_frame.iterrows():
-                position = parse_intish(row.get("Position"))
-                if position is None:
-                    continue
 
-                full_name = str(row.get("FullName") or "").strip()
-                abbreviation = str(row.get("Abbreviation") or "").strip()
-                lap_meta = best_lap_meta.get(abbreviation, {})
-                session_meta = driver_session_meta.get(abbreviation, {})
-                grid_position = parse_intish(row.get("GridPosition"))
-                qualifying_reference_times[abbreviation] = extract_reference_time(row)
-                qualifying_position = grid_reference_map.get(abbreviation)
-                grid_delta = 0 if grid_position is None else grid_position - position
-                penalty_flag = bool(
-                    qualifying_position is not None
-                    and grid_position is not None
-                    and grid_position > qualifying_position
-                )
-                results.append(
-                    {
-                        "position": position,
-                        "driver": full_name or abbreviation,
-                        "surname": (full_name.split(" ")[-1] if full_name else abbreviation),
-                        "abbreviation": abbreviation,
-                        "team": str(row.get("TeamName") or "").strip(),
-                        "detail": extract_result_detail(row) or lap_meta.get("detail") or "",
-                        "status": str(row.get("Status") or "").strip(),
-                        "points": extract_points(row.get("Points")),
-                        "compound": lap_meta.get("compound") or "",
-                        "compound_full": lap_meta.get("compound_full") or "",
-                        "fresh_tyre": lap_meta.get("fresh_tyre"),
-                        "sector_marks": lap_meta.get("sector_marks") or [],
-                        "laps_completed": session_meta.get("laps_completed") or 0,
-                        "tyre_sequence": session_meta.get("tyre_sequence") or [],
-                        "tyre_sequence_text": session_meta.get("tyre_sequence_text") or "",
-                        "leader_gap": "",
-                        "ahead_gap": "",
-                        "grid_delta": grid_delta,
-                        "grid_delta_text": f"+{grid_delta}" if grid_delta > 0 else str(grid_delta),
-                        "penalty_flag": penalty_flag,
-                        "penalty_marker": "!" if penalty_flag else "",
-                    }
-                )
+        if is_race_session(last_session["session_key"]):
+            # ── Primary path: f1api.dev ──────────────────────────────────────
+            # Provides correct grid positions (penalties applied), pre-formatted
+            # gaps, points, and final classification. FastF1 augments with tyres.
+            f1api_results = await fetch_f1api_race_results(season, int(round_number))
 
-            results.sort(key=lambda item: item["position"])
+            if f1api_results:
+                total_starters = len(f1api_results)
+                for entry in sorted(f1api_results.values(), key=lambda x: x["position"]):
+                    abbreviation = entry["abbreviation"]
+                    position = entry["position"]
+                    grid = entry["grid"]
+                    lap_meta = best_lap_meta.get(abbreviation, {})
+                    session_meta = driver_session_meta.get(abbreviation, {})
+                    # grid=0 means pit-lane / back-of-grid start
+                    starting_position = grid if grid > 0 else total_starters
+                    grid_delta = starting_position - position
+                    results.append(
+                        {
+                            "position": position,
+                            "driver": entry["driver"],
+                            "surname": entry["surname"],
+                            "abbreviation": abbreviation,
+                            "team": entry["team"],
+                            "detail": lap_meta.get("detail") or "",
+                            "status": entry["status"],
+                            "points": entry["points"],
+                            "compound": lap_meta.get("compound") or "",
+                            "compound_full": lap_meta.get("compound_full") or "",
+                            "fresh_tyre": lap_meta.get("fresh_tyre"),
+                            "sector_marks": lap_meta.get("sector_marks") or [],
+                            "sector_marks_text": lap_meta.get("sector_marks_text") or "",
+                            "best_lap_time": lap_meta.get("detail") or "",
+                            "fastest_lap": bool(entry["fast_lap"] or lap_meta.get("fastest_lap")),
+                            "laps_completed": session_meta.get("laps_completed") or 0,
+                            "tyre_sequence": session_meta.get("tyre_sequence") or [],
+                            "tyre_sequence_text": session_meta.get("tyre_sequence_text") or "",
+                            "leader_gap": format_f1api_gap(entry["time_raw"], position),
+                            "ahead_gap": "",
+                            "grid_delta": grid_delta,
+                            "grid_delta_text": f"+{grid_delta}" if grid_delta > 0 else str(grid_delta),
+                            "penalty_flag": False,
+                            "penalty_marker": "",
+                        }
+                    )
+                results.sort(key=lambda x: x["position"])
 
-            if is_qualifying_session(last_session["session_key"]):
-                leader_reference = None
-                previous_reference = None
-                for item in results:
-                    reference = qualifying_reference_times.get(item["abbreviation"])
-                    if reference is None:
-                        item["leader_gap"] = ""
-                        item["ahead_gap"] = ""
+        if not results:
+            # ── Fallback path: FastF1 session.results ────────────────────────
+            # Used for qualifying/practice (always), and for races when f1api.dev
+            # hasn't published results yet (race day / very recently finished).
+            race_gap_meta = build_race_gap_meta(session) if is_race_session(last_session["session_key"]) else {}
+            grid_reference_map = build_grid_reference_map(season, int(round_number), last_session["session_key"])
+
+            results_frame = getattr(session, "results", None)
+            if results_frame is not None and not results_frame.empty:
+                total_starters = len(results_frame)
+
+                for _, row in results_frame.iterrows():
+                    position = parse_position_value(row.get("Position"))
+                    if position is None:
                         continue
 
-                    if leader_reference is None:
-                        leader_reference = reference
-                    item["leader_gap"] = "LEAD" if item["position"] == 1 else format_delta(reference - leader_reference)
-                    item["ahead_gap"] = "-" if previous_reference is None else format_delta(reference - previous_reference)
-                    previous_reference = reference
+                    full_name = str(row.get("FullName") or "").strip()
+                    abbreviation = str(row.get("Abbreviation") or "").strip()
+                    lap_meta = best_lap_meta.get(abbreviation, {})
+                    session_meta = driver_session_meta.get(abbreviation, {})
+                    qualifying_reference_times[abbreviation] = extract_reference_time(row)
+                    qualifying_position = grid_reference_map.get(abbreviation)
+
+                    ff1_grid_raw = parse_intish(row.get("GridPosition"))
+                    if ff1_grid_raw is not None and ff1_grid_raw > 0:
+                        starting_position = ff1_grid_raw
+                    elif ff1_grid_raw == 0:
+                        starting_position = total_starters
+                    else:
+                        starting_position = qualifying_position
+                    if starting_position is None:
+                        starting_position = total_starters
+
+                    grid_delta = 0 if starting_position is None else starting_position - position
+                    penalty_flag = bool(
+                        qualifying_position is not None
+                        and ff1_grid_raw is not None
+                        and ff1_grid_raw > 0
+                        and ff1_grid_raw > qualifying_position
+                    )
+                    results.append(
+                        {
+                            "position": position,
+                            "driver": full_name or abbreviation,
+                            "surname": (full_name.split(" ")[-1] if full_name else abbreviation),
+                            "abbreviation": abbreviation,
+                            "team": str(row.get("TeamName") or "").strip(),
+                            "detail": extract_result_detail(row) or lap_meta.get("detail") or "",
+                            "status": str(row.get("Status") or "").strip(),
+                            "points": extract_points(row.get("Points")),
+                            "compound": lap_meta.get("compound") or "",
+                            "compound_full": lap_meta.get("compound_full") or "",
+                            "fresh_tyre": lap_meta.get("fresh_tyre"),
+                            "sector_marks": lap_meta.get("sector_marks") or [],
+                            "sector_marks_text": lap_meta.get("sector_marks_text") or "",
+                            "best_lap_time": lap_meta.get("detail") or "",
+                            "fastest_lap": bool(lap_meta.get("fastest_lap")),
+                            "laps_completed": session_meta.get("laps_completed") or 0,
+                            "tyre_sequence": session_meta.get("tyre_sequence") or [],
+                            "tyre_sequence_text": session_meta.get("tyre_sequence_text") or "",
+                            "leader_gap": "",
+                            "ahead_gap": "",
+                            "_raw_time": row.get("Time"),
+                            "grid_delta": grid_delta,
+                            "grid_delta_text": f"+{grid_delta}" if grid_delta > 0 else str(grid_delta),
+                            "penalty_flag": penalty_flag,
+                            "penalty_marker": "!" if penalty_flag else "",
+                        }
+                    )
+
+                results.sort(key=lambda item: item["position"])
+
+                if is_qualifying_session(last_session["session_key"]):
+                    leader_reference = None
+                    previous_reference = None
+                    for item in results:
+                        reference = qualifying_reference_times.get(item["abbreviation"])
+                        if reference is None:
+                            item["leader_gap"] = ""
+                            item["ahead_gap"] = ""
+                            continue
+                        if leader_reference is None:
+                            leader_reference = reference
+                        item["leader_gap"] = "LEAD" if item["position"] == 1 else format_delta(reference - leader_reference)
+                        item["ahead_gap"] = "-" if previous_reference is None else format_delta(reference - previous_reference)
+                        previous_reference = reference
+                elif is_race_session(last_session["session_key"]) and results:
+                    # FastF1 race gap fallback (f1api.dev not yet available)
+                    leader_code = results[0]["abbreviation"]
+                    leader_laps = (race_gap_meta.get(leader_code) or {}).get("lap_count") or 0
+                    leader_total = (race_gap_meta.get(leader_code) or {}).get("total_time")
+                    for item in results:
+                        raw_time = item.pop("_raw_time", None)
+                        lap_count = (race_gap_meta.get(item["abbreviation"]) or {}).get("lap_count") or 0
+                        if item["position"] == 1:
+                            item["leader_gap"] = "LEAD"
+                        elif leader_laps > 0 and lap_count < leader_laps:
+                            item["leader_gap"] = f"+{leader_laps - lap_count}L"
+                        else:
+                            time_val = raw_time
+                            if time_val is not None and hasattr(time_val, "to_pytimedelta"):
+                                time_val = time_val.to_pytimedelta()
+                            raw_str = str(raw_time) if raw_time is not None else ""
+                            if isinstance(time_val, timedelta) and raw_str not in ("", "NaT", "nan", "None"):
+                                item["leader_gap"] = format_delta(abs(time_val) if time_val.total_seconds() < 0 else time_val)
+                            else:
+                                total_time = (race_gap_meta.get(item["abbreviation"]) or {}).get("total_time")
+                                if total_time is not None and leader_total is not None:
+                                    delta = total_time - leader_total
+                                    if hasattr(delta, "to_pytimedelta"):
+                                        delta = delta.to_pytimedelta()
+                                    item["leader_gap"] = format_delta(abs(delta) if isinstance(delta, timedelta) and delta.total_seconds() < 0 else delta)
+                                else:
+                                    item["leader_gap"] = ""
 
         if not results:
             results = build_lap_based_results(session)
@@ -664,6 +953,36 @@ async def build_last_completed_session_payload(calendar_data, target_season: int
         "result_count": len(results),
         "load_error": load_error,
     }
+
+
+async def get_cached_last_completed_session_payload(calendar_data, target_season: int, expire: int = 900, timeout: float | None = None):
+    cache = FastAPICache.get_backend()
+    cache_key = f"f1:last_session:{target_season}"
+
+    cached = await cache.get(cache_key)
+    if cached:
+        return cached
+
+    try:
+        if timeout is not None:
+            response_data = await asyncio.wait_for(
+                build_last_completed_session_payload(calendar_data, target_season),
+                timeout=timeout,
+            )
+        else:
+            response_data = await build_last_completed_session_payload(calendar_data, target_season)
+    except asyncio.TimeoutError:
+        response_data = {
+            "season": calendar_data.get("season") or target_season,
+            "message": "Last completed session is taking longer than expected to load.",
+            "results": [],
+            "result_count": 0,
+            "load_error": "Timed out while loading the most recent completed session.",
+        }
+
+    response_data["cache_expires"] = (datetime.now(MT) + timedelta(seconds=expire)).isoformat()
+    await cache.set(cache_key, response_data, expire=expire)
+    return response_data
 
 
 async def fetch_circuit_weather(city: str, country: str):
@@ -766,9 +1085,11 @@ async def get_next_race():
     if not next_race:
         return {"message": "No upcoming race found"}
 
-    last_completed_session = await build_last_completed_session_payload(
+    last_completed_session = await get_cached_last_completed_session_payload(
         calendar_data,
         int(calendar_data.get("season") or get_target_season()),
+        expire=900,
+        timeout=8,
     )
 
     next_race = enrich_race_payload(next_race, calendar_data.get("season"))
@@ -820,6 +1141,7 @@ async def get_next_race():
             continue
 
     circuit_weather = await fetch_circuit_weather(circuit.get("city"), circuit.get("country"))
+    timeline = build_weekend_timeline(next_race)
 
     # Keep this endpoint fresh because it now includes live weather data.
     try:
@@ -846,6 +1168,7 @@ async def get_next_race():
         "next_event": next_event,
         "cache_expires": expiry_dt.isoformat(),
         "race": [next_race],
+        "timeline": timeline,
         "circuit_weather": circuit_weather,
         "last_session": last_completed_session,
     }
@@ -887,21 +1210,16 @@ async def get_following_race():
 
 @router.get("/last_session/", summary="Fetch most recent completed session")
 async def get_last_completed_session():
-    cache = FastAPICache.get_backend()
     target_season = get_target_season()
-    cache_key = f"f1:last_session:{target_season}"
-
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
 
     async with httpx.AsyncClient() as client:
         calendar_data = await fetch_calendar_data(client, target_season)
         if not calendar_data:
             return {"error": "Failed to fetch race schedule"}
-    expire = 900
-    response_data = await build_last_completed_session_payload(calendar_data, target_season)
-    response_data["cache_expires"] = (datetime.now(MT) + timedelta(seconds=expire)).isoformat()
 
-    await cache.set(cache_key, response_data, expire=expire)
-    return response_data
+    return await get_cached_last_completed_session_payload(
+        calendar_data,
+        target_season,
+        expire=900,
+        timeout=18,
+    )

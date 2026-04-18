@@ -1,68 +1,21 @@
 # Agent Guidelines for this Repository (Infrastructure)
 
-## 1. Project Overview & Philosophy
-This repository serves as the **"Single Source of Truth"** for a homelab server setup. It replaces tools like CasaOS with a Git-managed, Docker-based infrastructure.
-- **Goal**: Full system restoration from this repo + one script (`install.sh`).
-- **Scope**: Docker orchestration, network configuration (Traefik), and system setup.
-- **Exclusions**: Source code of custom apps (treated as black boxes/images), heavy data (media), and secrets (`.env`).
-
 ## 2. Directory Structure
 ```
 server/
-├── dapps/           # Decentralized/Dockerized Applications (one folder per service)
-│   ├── vidown/      # Video downloader (SvelteKit + Python)
-│   ├── anyconverter/# File converter (SvelteKit)
-│   ├── glance/      # Dashboard with custom APIs
-│   ├── jellyfin/    # Media server
-│   └── ...
+├── apps/           # Dockerized Applications (one folder per service)
 ├── infra/           # Core infrastructure services
-│   ├── traefik/     # Reverse proxy (routes all traffic)
-│   ├── cloudflared/ # Cloudflare tunnel for external access
-│   ├── databases/   # Shared MariaDB & PostgreSQL
-│   └── portainer/   # Docker UI management
 ├── devops/          # CI/CD and maintenance tools
-│   ├── gitea/       # Self-hosted Git
-│   ├── gitea-runner/# CI runner
-│   └── renovate/    # Dependency updates
 └── install.sh       # Bootstrap script for fresh servers
 ```
 
 ## 3. Build, Lint & Verification Commands
 
-### Docker Compose Validation
-```bash
-# Lint/validate compose file syntax (run from service directory)
-docker compose config
-
-# Validate with specific file
-docker compose -f dapps/<app>/docker-compose.yml config
-```
-
-### Deployment Commands
-```bash
-# Deploy a single service
-docker compose -f dapps/<app>/docker-compose.yml up -d
-
-# Rebuild after code changes
-docker compose -f dapps/<app>/docker-compose.yml up -d --build
-
-# View logs
-docker compose -f dapps/<app>/docker-compose.yml logs -f
-
-# Stop service
-docker compose -f dapps/<app>/docker-compose.yml down
-```
-
 ### System Verification
 ```bash
-# Check for port conflicts
-docker ps --format "table {{.Names}}\t{{.Ports}}"
 
 # Verify Traefik routing
 curl -I http://<service>.jr4.in
-
-# Check container health
-docker inspect --format='{{.State.Health.Status}}' <container_name>
 
 # Test network connectivity between containers
 docker exec traefik ping <container_name>
@@ -77,16 +30,14 @@ docker compose -f infra/traefik/docker-compose.yml up -d
 *All services must use `docker-compose.yml` (or `.yaml`).*
 
 ### Service Definition
-- **Isolation**: Each service gets its own directory (e.g., `dapps/new-service/`).
+- **Isolation**: Each service gets its own directory (e.g., `apps/new-service/`).
 - **Container Name**: ALWAYS specify `container_name: <service_name>` for DNS resolution.
 - **Restart Policy**: `restart: unless-stopped` is standard.
 - **Secrets**: Use `env_file: .env`. NEVER commit credentials to git.
-- **Healthchecks**: Include healthchecks for critical services (see examples in vidown, anyconverter).
 
 ### Networking Strategy
 Traefik is the reverse proxy. All web apps join the `proxy` network.
 
-**Method A: Proxy Network (Preferred)**
 ```yaml
 services:
   myapp:
@@ -97,12 +48,6 @@ services:
 networks:
   proxy:
     external: true
-```
-
-**Method B: Host Ports (Legacy)**
-```yaml
-ports:
-  - "8080:80"  # Then reference via host.docker.internal:8080 in Traefik
 ```
 
 ### Traefik Service Registration
@@ -141,7 +86,6 @@ http:
 ### Environment Variables
 - Create `.env.example` with documented placeholders for any service requiring secrets
 - Use descriptive variable names with service prefix: `GITEA_DB_HOST`, `FM_RATE_LIMIT_RPS`
-- Never commit `.env` files (already in `.gitignore`)
 
 ### Naming Conventions
 - **Directories**: lowercase, hyphenated (`homelab-filemgr`)
@@ -156,60 +100,22 @@ http:
 - Prefer `expose` over `ports` for internal-only services
 
 ## 6. Adding a New Service Checklist
-1. [ ] Create `<(dapps/devops/infra)>/<service>/docker-compose.yml`
+1. [ ] Create `<(apps/devops/infra)>/<service>/docker-compose.yml`
 2. [ ] Set `container_name` matching directory name
 3. [ ] Add `restart: unless-stopped`
 4. [ ] Join `proxy` network (external: true)
-5. [ ] Add healthcheck if service supports it
-6. [ ] Create `.env.example` if secrets are needed
-7. [ ] Register router and service in `infra/traefik/config/dynamic/services.yaml`
-8. [ ] Validate with `docker compose config`
-9. [ ] Test with `docker compose up -d`
-10. [ ] Verify routing: `curl -I http://<service>.jr4.in`
+5. [ ] Create `.env.example` if secrets are needed
+6. [ ] Register router and service in `infra/traefik/config/dynamic/services.yaml`
+7. [ ] Validate with `docker compose config`
+8. [ ] Test with `docker compose up -d`
+9.  [ ] Verify routing: `curl -I http://<service>.jr4.in`
 
-## 7. Common Patterns
-
-### Multi-Container Service (Frontend + Backend)
-See `dapps/vidown/` or `dapps/homelab-filemgr/` for examples with:
-- Frontend (SvelteKit/Node)
-- Backend (Python/Go)
-- Shared network
-- Health-dependent startup
-
-### Service with Custom Build Context
-```yaml
-services:
-  app:
-    build:
-      context: ./subfolder
-      dockerfile: Dockerfile
-    container_name: myapp
-```
-
-### Database-Dependent Service
-Reference shared databases in `infra/databases/`:
-- PostgreSQL: `postgres:5432`
-- MariaDB: `mariadb:3306`
-
-## 8. Troubleshooting
-
-### Container won't start
-```bash
-docker compose logs <service>
-docker inspect <container> | grep -A 10 State
-```
-
-### Network issues
-```bash
-docker network ls
-docker network inspect proxy
-```
-
-### Traefik not routing
-1. Check container is on `proxy` network
-2. Verify `services.yaml` syntax
-3. Check Traefik logs: `docker logs traefik`
-4. Confirm DNS resolves to server
+## 7. Archiving Service Folders
+- If the user says to "put a folder in archive", interpret this as a lifecycle change, not only a file move.
+- Required sequence:
+  1. Stop the service with `docker compose down` from its current folder.
+  2. Move the service directory into `archive/<service>/`.
+  3. Do not restart the archived service unless the user explicitly asks.
 
 ---
 *Maintained for AI agents operating in this repository*

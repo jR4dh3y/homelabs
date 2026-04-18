@@ -6,7 +6,7 @@
 2. Ensure Traefik is running.
 3. Start the service:
    ```bash
-   docker compose -f dapps/continuwuity/docker-compose.yaml up -d
+   docker compose -f archive/continuwuity/docker-compose.yaml up -d
    ```
 
 ## Notes

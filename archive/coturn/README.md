@@ -5,7 +5,7 @@
 1. Copy `.env.example` to `.env`.
 2. Set `TURN_EXTERNAL_IP` to your server public IP.
 3. Set `TURN_SHARED_SECRET` and use the exact same value in:
-   `dapps/continuwuity/.env` -> `CONTINUWUITY_TURN_SECRET`.
+   `archive/continuwuity/.env` -> `CONTINUWUITY_TURN_SECRET`.
 4. Start the service:
    ```bash
    docker compose -f infra/coturn/docker-compose.yaml up -d

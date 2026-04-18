@@ -1,0 +1,32 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      - TZ=${TZ:-UTC}
+      - DOMAIN=${VW_DOMAIN:-https://vault.jr4.in}
+      - SIGNUPS_ALLOWED=${VW_SIGNUPS_ALLOWED:-true}
+      - ADMIN_TOKEN=${VW_ADMIN_TOKEN:-}
+
+    volumes:
+      - /DATA/AppData/vaultwarden:/data
+
+    security_opt:
+      - no-new-privileges:true
+
+    networks:
+      - proxy
+
+    deploy:
+      resources:
+        reservations:
+          memory: 256M
+
+networks:
+  proxy:
+    external: true

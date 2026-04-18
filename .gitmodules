@@ -1,11 +1,11 @@
-[submodule "dapps/anyconverter"]
-	path = dapps/anyconverter
+[submodule "apps/anyconverter"]
+	path = apps/anyconverter
 	url = https://github.com/jR4dh3y/anyconverter
 
-[submodule "dapps/homelab-filemgr"]
-	path = dapps/homelab-filemgr
+[submodule "apps/homelab-filemgr"]
+	path = apps/homelab-filemgr
 	url = https://github.com/jR4dh3y/homelab-filemgr
 
-[submodule "dapps/vidown"]
-	path = dapps/vidown
+[submodule "apps/vidown"]
+	path = apps/vidown
 	url = https://github.com/jR4dh3y/vidown

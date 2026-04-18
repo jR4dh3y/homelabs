@@ -1,0 +1,61 @@
+# =============================================================================
+# OpenVAS - Vulnerability Scanner
+# =============================================================================
+# OpenVAS (Open Vulnerability Assessment System) is a full-featured vulnerability
+# scanner. Its capabilities include unauthenticated testing, authenticated testing,
+# various high level and low level internet and industrial protocols, performance
+# tuning for large scale scans and a powerful internal programming language
+# to implement any type of vulnerability test.
+#
+# Access via Traefik at https://vas.jr4.in
+# =============================================================================
+
+services:
+  openvas:
+    image: mikesplain/openvas:9
+    container_name: openvas
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PUBLIC_HOSTNAME=vas.jr4.in
+      - OV_PASSWORD=${OPENVAS_ADMIN_PASSWORD:-changeme}
+    volumes:
+      - openvas_data:/var/lib/openvas/mgr/
+      - openvas_plugins:/var/lib/openvas/plugins
+      - openvas_cert:/var/lib/openvas/CA
+      - openvas_scanner:/var/lib/openvas/scap
+      - openvas_gnupg:/etc/openvas/gnupg
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openvas.rule=Host(`vas.jr4.in`)"
+      - "traefik.http.routers.openvas.entrypoints=websecure"
+      - "traefik.http.routers.openvas.tls=true"
+      - "traefik.http.services.openvas.loadbalancer.server.port=443"
+    networks:
+      - proxy
+    security_opt:
+      - no-new-privileges:true
+    # Healthcheck - OpenVAS takes time to start, so we use a longer interval
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-qO-", "https://localhost:443", "|", "grep", "-i", "openvas"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  openvas_data:
+    driver: local
+  openvas_plugins:
+    driver: local
+  openvas_cert:
+    driver: local
+  openvas_scanner:
+    driver: local
+  openvas_gnupg:
+    driver: local

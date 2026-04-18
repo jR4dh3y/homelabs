@@ -54,3 +54,18 @@ http:
         regex: "^https://www\\.(.*)"
         replacement: "https://${1}"
         permanent: true
+
+    # Basic Auth for protected services
+    # Generate password with: htpasswd -nb username password
+    basic-auth:
+      basicAuth:
+        users:
+          - "radheyk10:$apr1$9KWPYk76$gGM8FtJw2HLv7zhC9B20H."
+
+    # Auth chain - secure headers + basic auth
+    auth-chain:
+      chain:
+        middlewares:
+          - secure-headers
+          - basic-auth
+          - gzip-compress
