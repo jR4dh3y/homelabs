@@ -43,11 +43,15 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 - **[Excalidraw](dapps/excalidraw/)**
 - **[Glance](dapps/glance/)**
 - **[Homelab FileManager](dapps/homelab-filemgr/)**
+- **[Invidious](dapps/invidious/)**
 - **[Jellyfin](dapps/jellyfin/)**
+- **[OpenCode](dapps/opencode/)**
+- **[OpenVAS](dapps/openvas/)**
 - **[OpenWebUI](dapps/openwebui/)**
 - **[QBittorrent](dapps/qbittorrent/)**
 - **[Steam Headless](dapps/steam-headless/)**
 - **[SwingMusic](dapps/swingmusic/)**
+- **[Vaultwarden](dapps/vaultwarden/)**
 - **[Vidown](dapps/vidown/)**
 
 ### DevOps & Tools
@@ -63,6 +67,7 @@ Single Source of Truth for a Docker-based homelab. This repository tracks infras
 - **[Continuwuity](archive/continuwuity/)**: Matrix homeserver.
 - **[Coturn](archive/coturn/)**: TURN relay for Matrix VoIP.
 - **[GitLab](archive/gitlab/)**
+- **[OpenClaw](archive/openclaw/)**
 - **[Siyuan](archive/siyuan/)**
 - **[Vikunja](archive/vikunja/)**
 
