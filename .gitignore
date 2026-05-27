@@ -25,3 +25,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Local app repos
+apps/webterm-7421/

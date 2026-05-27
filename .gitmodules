@@ -9,6 +9,3 @@
 [submodule "apps/boxbox"]
 	path = apps/boxbox
 	url = https://github.com/jR4dh3y/boxbox
-[submodule "apps/webterm-7421"]
-	path = apps/webterm-7421
-	url = http://git.jr4.in/jR4dh3y/webterm.git
