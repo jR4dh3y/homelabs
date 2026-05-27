@@ -28,22 +28,6 @@ http:
     # MEDIA
     # ============================================
     
-    jellyfin:
-      rule: "Host(`jellyfin.jr4.in`)"
-      entryPoints:
-        - web
-      service: jellyfin
-      middlewares:
-        - default-chain
-
-    swingmusic:
-      rule: "Host(`swing.jr4.in`)"
-      entryPoints:
-        - web
-      service: swingmusic
-      middlewares:
-        - default-chain
-
     qbittorrent:
       rule: "Host(`qbit.jr4.in`)"
       entryPoints:
@@ -104,6 +88,24 @@ http:
       middlewares:
         - auth-chain
 
+    webterm-api:
+      rule: "Host(`term.jr4.in`) && (PathPrefix(`/api`) || Path(`/health`))"
+      entryPoints:
+        - web
+      service: webterm-api
+      priority: 200
+      middlewares:
+        - auth-chain
+
+    webterm:
+      rule: "Host(`term.jr4.in`)"
+      entryPoints:
+        - web
+      service: webterm
+      priority: 100
+      middlewares:
+        - auth-chain
+
     # ============================================
     # UTILITIES
     # ============================================
@@ -145,6 +147,22 @@ http:
       entryPoints:
         - web
       service: f1api
+      middlewares:
+        - default-chain
+
+    fbs-core:
+      rule: "Host(`fbs.jr4.in`)"
+      entryPoints:
+        - web
+      service: fbs-core
+      middlewares:
+        - default-chain
+
+    vaultwarden:
+      rule: "Host(`vault.jr4.in`)"
+      entryPoints:
+        - web
+      service: vaultwarden
       middlewares:
         - default-chain
 
@@ -202,10 +220,10 @@ http:
         servers:
           - url: "http://f1_api:4463"
 
-    swingmusic:
+    fbs-core:
       loadBalancer:
         servers:
-          - url: "http://swingmusic:1970"
+          - url: "http://fbs-core:9000"
 
     openwebui:
       loadBalancer:
@@ -227,6 +245,11 @@ http:
         servers:
           - url: "http://filemanager:80"
 
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://vaultwarden:80"
+
     siyuan:
       loadBalancer:
         servers:
@@ -243,11 +266,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:9000"
-
-    jellyfin:
-      loadBalancer:
-        servers:
-          - url: "http://host.docker.internal:8097"
 
     qbittorrent:
       loadBalancer:
@@ -273,6 +291,16 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:3000"
+
+    webterm:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3001"
+
+    webterm-api:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8787"
 
     # --- Host networking containers ---
     

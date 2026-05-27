@@ -2,10 +2,10 @@
 	path = apps/anyconverter
 	url = https://github.com/jR4dh3y/anyconverter
 
-[submodule "apps/homelab-filemgr"]
-	path = apps/homelab-filemgr
-	url = https://github.com/jR4dh3y/homelab-filemgr
-
 [submodule "apps/vidown"]
 	path = apps/vidown
 	url = https://github.com/jR4dh3y/vidown
+
+[submodule "apps/boxbox"]
+	path = apps/boxbox
+	url = https://github.com/jR4dh3y/boxbox

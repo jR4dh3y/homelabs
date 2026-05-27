@@ -26,10 +26,6 @@
         hide-by-default: false
         # show-all-containers: false
         containers:
-          jellyfin:
-            name: Jellyfin
-            icon: si:jellyfin
-            url: https://media.jr4.in
           big-bear-open-webui:
             name: Open-WebUI
             icon: mdi:robot
@@ -110,10 +106,6 @@
              name: Excalidraw
              icon: mdi:pencil-ruler
              url: https://draw.jr4.in
-          swingmusic:
-             name: SwingMusic
-             icon: mdi:music-note
-             url: https://music.jr4.in
           siyuan:
               name: SiYuan
               icon: mdi:notebook
